@@ -1,0 +1,19 @@
+{
+  "name": "@agent-book/book-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@agent-book/agent-core": "workspace:*",
+    "@agent-book/agent-runtime": "workspace:*",
+    "@agent-book/shared": "workspace:*",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  }
+}
