@@ -2,12 +2,20 @@
 
 《从零实现 AI Agent：原理、架构、源码与工程实践》是一套源码驱动、可运行、可交互的 TypeScript 学习材料。
 
+在线阅读：[GitHub Pages](https://thosewhoyoulove.github.io/agent-book/)
+
 当前首个增量包含：
 
 - `apps/book-web`：交互式书籍阅读站点
 - `packages/agent-core`：原生 TypeScript Agent Loop、Tool Registry 与 Mock LLM
 - `packages/agent-runtime`：状态、事件、取消、超时和最大步数边界
+- 第 1 章：AI Agent、Chatbot、Workflow 的边界
+- 第 2 章：LLM 接口与消息协议
+- 第 3 章：Tool Registry 与执行器
+- 第 4 章：Function Calling 与 Tool Use
 - 第 5 章：从零实现 Agent Loop
+- 第 6 章：Agent Runtime 与状态机
+- 第 9 章：Context Engineering
 - Agent Loop Simulator：单步执行、自动播放、错误模拟、状态和消息历史回放
 
 ## 开始运行
