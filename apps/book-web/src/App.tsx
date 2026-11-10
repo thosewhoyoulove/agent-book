@@ -5,6 +5,12 @@ import { CodeBlock } from "./components/CodeBlock";
 import { chapterFiveSections, minimalLoopCode, productionLoopCode } from "./content/chapter5";
 
 const progressKey = "agent-book-progress-chapter-5";
+const outlineItems = [
+  ...chapterFiveSections.map((section) => ({ id: section.id, title: section.eyebrow })),
+  { id: "code", title: "最小可运行实现" },
+  { id: "simulator", title: "Agent Loop Simulator" },
+  { id: "interview", title: "面试官视角" }
+];
 
 function getInitialProgress(): number {
   if (typeof window === "undefined") return 18;
@@ -12,9 +18,11 @@ function getInitialProgress(): number {
 }
 
 export function App() {
-  const [dark, setDark] = useState(true);
+  const [dark, setDark] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [progress, setProgress] = useState(getInitialProgress);
   const [query, setQuery] = useState("");
+  const [activeSection, setActiveSection] = useState("opening");
   const availableChapters = useMemo(() => chapters.filter((chapter) => chapter.status === "available"), []);
 
   useEffect(() => {
@@ -25,39 +33,80 @@ export function App() {
     window.localStorage.setItem(progressKey, String(progress));
   }, [progress]);
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        document.querySelector<HTMLInputElement>("[data-search]")?.focus();
+      }
+      if (event.key === "Escape") setMobileNavOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  useEffect(() => {
+    const sections = outlineItems.map((item) => document.getElementById(item.id)).filter(Boolean);
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+      if (visible[0]?.target.id) setActiveSection(visible[0].target.id);
+    }, { rootMargin: "-18% 0px -65% 0px", threshold: [0, 0.25, 0.7] });
+    sections.forEach((section) => section && observer.observe(section));
+    return () => observer.disconnect();
+  }, []);
+
   const searchMatches = query.trim().length > 1
     ? chapterFiveSections.filter((section) => `${section.title} ${section.paragraphs.join(" ")}`.includes(query.trim()))
     : [];
 
+  const closeMobileNav = () => setMobileNavOpen(false);
+
   return (
     <div className="app-shell">
       <header className="topbar">
-        <div className="brand-mark" aria-label="Agent Book home">
-          <span className="brand-mark__glyph">∿</span>
-          <span>AGENT BOOK <small>01 / 09</small></span>
+        <div className="topbar__leading">
+          <button className="mobile-nav-toggle" onClick={() => setMobileNavOpen((value) => !value)} aria-label="打开章节目录" aria-expanded={mobileNavOpen}>
+            <span /><span /><span />
+          </button>
+          <a className="brand-mark" href="#chapter-5" aria-label="返回 Agent Book 章节首页">
+            <span className="brand-mark__glyph">∿</span>
+            <span className="brand-mark__name">AGENT BOOK</span>
+          </a>
+          <nav className="topbar__nav" aria-label="全局导航">
+            <a href="#chapter-5">章节 <span>⌄</span></a>
+            <a href="#simulator">实验 <span>⌄</span></a>
+            <a href="#code">源码</a>
+            <a href="#interview">学习路径</a>
+          </nav>
         </div>
         <div className="topbar__actions">
           <label className="search-box">
             <span aria-hidden="true">⌕</span>
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索本章内容" aria-label="搜索本章内容" />
+            <input data-search value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索文档" aria-label="搜索本章内容" />
             <kbd>⌘ K</kbd>
           </label>
+          <button className="ask-ai-button" onClick={() => document.querySelector<HTMLInputElement>("[data-search]")?.focus()}>问 AI</button>
+          <a className="topbar__source" href="#code">源码</a>
           <button className="icon-button" onClick={() => setDark((value) => !value)} aria-label={dark ? "切换到浅色主题" : "切换到深色主题"}>
-            {dark ? "☼" : "◐"}
+            <span aria-hidden="true">{dark ? "☼" : "◐"}</span>
           </button>
-          <div className="progress-indicator"><span>阅读进度</span><strong>{progress}%</strong></div>
+          <button className="profile-button" aria-label="打开账户菜单">◎</button>
+          <div className="progress-indicator"><span>进度</span><strong>{progress}%</strong></div>
         </div>
       </header>
 
       {searchMatches.length > 0 && (
         <div className="search-results" role="status">
           <span>找到 {searchMatches.length} 个匹配段落</span>
-          {searchMatches.map((section) => <a href={`#${section.id}`} key={section.id}>{section.title}</a>)}
+          {searchMatches.map((section) => <a href={`#${section.id}`} onClick={() => setQuery("")} key={section.id}>{section.title}</a>)}
         </div>
       )}
 
+      {mobileNavOpen && <button className="nav-scrim" onClick={closeMobileNav} aria-label="关闭章节目录" />}
+
       <div className="reading-layout">
-        <aside className="sidebar">
+        <aside className={`sidebar ${mobileNavOpen ? "sidebar--open" : ""}`}>
+          <div className="sidebar__mobile-head"><span>章节目录</span><button onClick={closeMobileNav} aria-label="关闭章节目录">×</button></div>
           <div className="sidebar__intro">
             <span className="sidebar__label">学习路径</span>
             <p>从一次 LLM 调用，到完整 Agent Runtime 的设计与实现。</p>
@@ -70,7 +119,7 @@ export function App() {
             <div className="nav-section-label">Part 2 · 执行机制</div>
             <button className="chapter-link chapter-link--locked"><span>04</span><em>Function Calling 与 Tool Use</em><i>锁定</i></button>
             {availableChapters.map((chapter) => (
-              <a className="chapter-link chapter-link--active" href="#chapter-5" key={chapter.id}>
+              <a className="chapter-link chapter-link--active" href="#chapter-5" onClick={closeMobileNav} key={chapter.id}>
                 <span>{String(chapter.number).padStart(2, "0")}</span><em>{chapter.title}</em><i>当前</i>
               </a>
             ))}
@@ -85,10 +134,13 @@ export function App() {
         </aside>
 
         <main className="article" id="chapter-5">
-          <div className="article__meta"><span>第 05 章</span><span className="meta-line" /><span>预计阅读 45 分钟</span><span className="meta-status"><i />可交互</span></div>
-          <h1>从零实现<br /><span>Agent Loop</span></h1>
-          <p className="article__lead">一次 LLM 调用只是回答的开始。让模型观察工具结果、修正动作并完成任务，需要一段由程序控制的执行循环。</p>
-          <div className="hero-note"><span className="hero-note__line" /><div><strong>本章的承诺</strong><p>读完这一章，你可以不依赖 Agent 框架，写出一个有工具、有停止条件、能处理失败的 TypeScript Agent。</p></div></div>
+          <div className="breadcrumb"><a href="#chapter-5">Agent Book</a><span>/</span><span>Part 02 · 执行机制</span><span>/</span><strong>第 05 章</strong></div>
+          <header className="chapter-header">
+            <div className="article__meta"><span>第 05 章</span><span className="meta-line" /><span>预计阅读 45 分钟</span><span className="meta-status"><i />可交互</span></div>
+            <h1>从零实现<br /><span>Agent Loop</span></h1>
+            <p className="article__lead">一次 LLM 调用只是回答的开始。让模型观察工具结果、修正动作并完成任务，需要一段由程序控制的执行循环。</p>
+            <div className="hero-note"><span className="hero-note__line" /><div><strong>本章目标</strong><p>不依赖 Agent 框架，写出一个有工具、有停止条件、能处理失败的 TypeScript Agent。</p></div></div>
+          </header>
 
           <div className="chapter-flow" aria-label="本章学习路径">
             <div className="flow-step flow-step--active"><b>01</b><span>看见问题</span></div><i>→</i><div className="flow-step"><b>02</b><span>建立循环</span></div><i>→</i><div className="flow-step"><b>03</b><span>运行实验</span></div><i>→</i><div className="flow-step"><b>04</b><span>工程化</span></div>
@@ -136,7 +188,7 @@ export function App() {
 
         <aside className="outline">
           <div className="outline__title">本章目录 <span>05</span></div>
-          <nav>{[...chapterFiveSections.map((section) => ({ id: section.id, title: section.eyebrow })), { id: "code", title: "最小可运行实现" }, { id: "simulator", title: "Agent Loop Simulator" }, { id: "interview", title: "面试官视角" }].map((item, index) => <a href={`#${item.id}`} key={item.id}><i>{String(index + 1).padStart(2, "0")}</i>{item.title}</a>)}</nav>
+          <nav>{outlineItems.map((item, index) => <a className={activeSection === item.id ? "is-active" : ""} href={`#${item.id}`} onClick={() => setActiveSection(item.id)} aria-current={activeSection === item.id ? "location" : undefined} key={item.id}><i>{String(index + 1).padStart(2, "0")}</i>{item.title}</a>)}</nav>
           <div className="outline__tip"><span>实验提示</span><p>先点击“单步执行”，再打开“模拟工具错误”，观察错误如何进入消息历史。</p></div>
         </aside>
       </div>
