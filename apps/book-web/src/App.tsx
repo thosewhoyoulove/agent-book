@@ -86,6 +86,12 @@ function getInitialChapterId(): AvailableChapterId {
   return "chapter-5";
 }
 
+function getInitialHomeState(): boolean {
+  if (typeof window === "undefined") return true;
+  const hash = window.location.hash.slice(1);
+  return hash === "" || hash === "home";
+}
+
 function getChapterOutline(chapterId: AvailableChapterId) {
   const sections = chapterContent[chapterId];
   const extraItems =
@@ -142,6 +148,97 @@ function buildSnippet(paragraphs: string[], keyword: string): string {
   return `${start > 0 ? "…" : ""}${full.slice(start, end)}${end < full.length ? "…" : ""}`;
 }
 
+function HomePage({ onOpenChapter }: { onOpenChapter: (chapterId: AvailableChapterId) => void }) {
+  return (
+    <main className="home-page">
+      <section className="home-hero" aria-labelledby="home-title">
+        <div className="home-hero__copy">
+          <span className="home-kicker"><i aria-hidden="true" />FIELD GUIDE · 2026 EDITION</span>
+          <h1 id="home-title">攀登 Agent 的<br /><em>技术高山</em></h1>
+          <p>
+            一本可以探索的 Agent 工程书。沿着主线山路理解模型、工具、上下文与运行时，
+            在每个 checkpoint 亲手把概念变成可运行的代码。
+          </p>
+          <div className="home-actions">
+            <button className="button button--primary" type="button" onClick={() => onOpenChapter("chapter-1")}>
+              从第一座山开始
+            </button>
+            <button className="button button--ghost" type="button" onClick={() => onOpenChapter("chapter-5")}>
+              进入 Agent Loop 实验
+            </button>
+          </div>
+          <div className="home-stats" aria-label="全书信息">
+            <span><b>07</b> 个可探索章节</span>
+            <span><b>01</b> 个交互实验</span>
+            <span><b>∞</b> 条工程路线</span>
+          </div>
+        </div>
+
+        <div className="home-hero__map" aria-hidden="true">
+          <span className="home-map__star home-map__star--one">✦</span>
+          <span className="home-map__star home-map__star--two">✦</span>
+          <span className="home-map__marker home-map__marker--base">01</span>
+          <span className="home-map__marker home-map__marker--peak">05</span>
+          <svg className="home-mountain-art" viewBox="0 0 560 420" fill="none">
+            <path d="M20 372L168 128L234 214L326 48L540 372H20Z" fill="var(--home-mountain-back)" />
+            <path d="M110 372L260 166L326 254L400 150L540 372H110Z" fill="var(--home-mountain-front)" />
+            <path d="M20 372L168 128L234 214L326 48L540 372" stroke="var(--home-mountain-line)" strokeWidth="3" />
+            <path d="M168 128L190 166L234 214M326 48L360 116L400 150" stroke="var(--home-snow)" strokeWidth="7" strokeLinejoin="bevel" />
+            <path d="M78 330C150 282 170 322 232 278C294 234 348 266 404 220C446 186 478 214 526 178" stroke="var(--accent)" strokeWidth="3" strokeDasharray="7 10" />
+            <path d="M78 330L78 282M526 178L526 130" stroke="var(--tool)" strokeWidth="3" />
+          </svg>
+        </div>
+      </section>
+
+      <section className="home-route" aria-labelledby="route-title">
+        <div className="home-section-heading">
+          <div>
+            <span className="home-kicker"><i aria-hidden="true" />THE ASCENT MAP</span>
+            <h2 id="route-title">选择一条路线，开始向上</h2>
+          </div>
+          <p>主线从基础边界出发，经过执行机制，最终抵达上下文工程的高处。</p>
+        </div>
+
+        <div className="home-route__groups">
+          {partGroups.map((group) => (
+            <section className="home-route__group" key={group.id}>
+              <div className="home-route__group-label">
+                <span>{group.label}</span>
+                <strong>{group.title}</strong>
+                <i aria-hidden="true" />
+              </div>
+              <div className="home-chapter-grid">
+                {group.chapters.map((chapter) => (
+                  <button
+                    className={`home-chapter-card ${chapter.id === "chapter-5" ? "home-chapter-card--featured" : ""}`}
+                    type="button"
+                    onClick={() => onOpenChapter(chapter.id as AvailableChapterId)}
+                    key={chapter.id}
+                  >
+                    <span className="home-chapter-card__number">{String(chapter.number).padStart(2, "0")}</span>
+                    <span className="home-chapter-card__icon" aria-hidden="true">{chapter.id === "chapter-5" ? "✦" : "◇"}</span>
+                    <span className="home-chapter-card__body">
+                      <small>{chapter.section} · {chapter.duration}</small>
+                      <strong>{chapter.title}</strong>
+                      <span>{chapter.summary}</span>
+                    </span>
+                    <span className="home-chapter-card__arrow" aria-hidden="true">↗</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      </section>
+
+      <footer className="home-footer">
+        <span>AGENT BOOK</span>
+        <span>学习 Agent 开发，就像攀登一座技术高山。</span>
+      </footer>
+    </main>
+  );
+}
+
 export function App() {
   const [dark, setDark] = useState(getInitialTheme);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -150,6 +247,7 @@ export function App() {
   const [query, setQuery] = useState("");
   const [selectedHitIndex, setSelectedHitIndex] = useState(0);
   const [scrollPercent, setScrollPercent] = useState(0);
+  const [isHome, setIsHome] = useState(getInitialHomeState);
 
   const [activeChapterId, setActiveChapterId] = useState<AvailableChapterId>(getInitialChapterId);
   const [progressMap, setProgressMap] = useState<Record<AvailableChapterId, number>>(readProgressMap);
@@ -164,6 +262,7 @@ export function App() {
   );
 
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const sectionNavigationRef = useRef<{ targetId: string; timeoutId: number } | null>(null);
 
   const activeChapter =
     chapters.find((chapter) => chapter.id === activeChapterId) ??
@@ -202,18 +301,28 @@ export function App() {
     window.localStorage.setItem("agent-book-theme", dark ? "dark" : "light");
     const themeMeta = document.querySelector('meta[name="theme-color"]');
     if (themeMeta) {
-      themeMeta.setAttribute("content", dark ? "#161412" : "#faf7f2");
+      themeMeta.setAttribute("content", dark ? "#081522" : "#e7eef4");
     }
   }, [dark]);
 
   useEffect(() => {
     const onHashChange = () => {
-      const hashTarget = window.location.hash.slice(1) as AvailableChapterId;
+      const hash = window.location.hash.slice(1);
+      if (hash === "" || hash === "home") {
+        setIsHome(true);
+        setMobileNavOpen(false);
+        setMobileOutlineOpen(false);
+        window.scrollTo({ top: 0, behavior: "auto" });
+        return;
+      }
+
+      const hashTarget = hash as AvailableChapterId;
       if (hashTarget in chapterContent) {
+        setIsHome(false);
         setActiveChapterId(hashTarget);
         setActiveSection(chapterContent[hashTarget][0]?.id ?? "opening");
         setMobileOutlineOpen(false);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        window.scrollTo({ top: 0, behavior: "auto" });
       }
     };
     window.addEventListener("hashchange", onHashChange);
@@ -237,6 +346,10 @@ export function App() {
 
   useEffect(() => {
     const computeScroll = () => {
+      if (isHome) {
+        setScrollPercent(0);
+        return;
+      }
       const doc = document.documentElement;
       const scrollable = doc.scrollHeight - window.innerHeight;
       if (scrollable <= 0) {
@@ -257,7 +370,7 @@ export function App() {
       window.removeEventListener("resize", computeScroll);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeChapterId]);
+  }, [activeChapterId, isHome]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -284,11 +397,25 @@ export function App() {
   }, [searchOpen]);
 
   useEffect(() => {
+    if (isHome) return;
     const sectionNodes = activeChapterOutline
       .map((item) => document.getElementById(item.id))
       .filter((node): node is HTMLElement => Boolean(node));
     const observer = new IntersectionObserver(
       (entries) => {
+        const navigation = sectionNavigationRef.current;
+        if (navigation) {
+          const targetReached = entries.some(
+            (entry) => entry.target.id === navigation.targetId && entry.isIntersecting
+          );
+          if (!targetReached) return;
+
+          window.clearTimeout(navigation.timeoutId);
+          sectionNavigationRef.current = null;
+          setActiveSection(navigation.targetId);
+          return;
+        }
+
         const visible = entries
           .filter((entry) => entry.isIntersecting)
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
@@ -300,7 +427,7 @@ export function App() {
     );
     sectionNodes.forEach((node) => observer.observe(node));
     return () => observer.disconnect();
-  }, [activeChapterOutline]);
+  }, [activeChapterOutline, isHome]);
 
   useEffect(() => {
     document.querySelector<HTMLElement>(`[data-nav-section="${activeSection}"]`)?.scrollIntoView({
@@ -356,10 +483,45 @@ export function App() {
     setSelectedHitIndex(0);
   }, [query]);
 
+  const clearSectionNavigation = () => {
+    const navigation = sectionNavigationRef.current;
+    if (navigation) {
+      window.clearTimeout(navigation.timeoutId);
+      sectionNavigationRef.current = null;
+    }
+  };
+
+  const beginSectionNavigation = (targetId: string) => {
+    clearSectionNavigation();
+    const timeoutId = window.setTimeout(() => {
+      if (sectionNavigationRef.current?.targetId !== targetId) return;
+      sectionNavigationRef.current = null;
+      setActiveSection(targetId);
+    }, 1500);
+    sectionNavigationRef.current = { targetId, timeoutId };
+    setActiveSection(targetId);
+  };
+
+  const scrollToSection = (targetId: string) => {
+    beginSectionNavigation(targetId);
+    document.getElementById(targetId)?.scrollIntoView({ behavior: "auto", block: "start" });
+  };
+
+  const navigateToHome = () => {
+    clearSectionNavigation();
+    setMobileNavOpen(false);
+    setMobileOutlineOpen(false);
+    setSearchOpen(false);
+    setIsHome(true);
+    window.history.pushState(null, "", "#home");
+    window.scrollTo({ top: 0, behavior: "auto" });
+  };
+
   const navigateToChapter = (chapterId: AvailableChapterId, targetSectionId?: string) => {
     setMobileNavOpen(false);
     setMobileOutlineOpen(false);
     setSearchOpen(false);
+    setIsHome(false);
 
     if (chapterId !== activeChapterId) {
       window.history.pushState(null, "", `#${chapterId}`);
@@ -367,21 +529,21 @@ export function App() {
       const fallbackSection = targetSectionId && targetSectionId !== chapterId
         ? targetSectionId
         : chapterContent[chapterId][0]?.id ?? "opening";
-      setActiveSection(fallbackSection);
+      beginSectionNavigation(fallbackSection);
       window.requestAnimationFrame(() => {
         window.setTimeout(() => {
           if (targetSectionId && targetSectionId !== chapterId) {
-            document.getElementById(targetSectionId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+            document.getElementById(targetSectionId)?.scrollIntoView({ behavior: "auto", block: "start" });
           } else {
-            window.scrollTo({ top: 0, behavior: "smooth" });
+            window.scrollTo({ top: 0, behavior: "auto" });
           }
         }, 40);
       });
     } else if (targetSectionId && targetSectionId !== chapterId) {
-      setActiveSection(targetSectionId);
-      document.getElementById(targetSectionId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      scrollToSection(targetSectionId);
     } else {
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      clearSectionNavigation();
+      window.scrollTo({ top: 0, behavior: "auto" });
     }
   };
 
@@ -405,28 +567,30 @@ export function App() {
     <div className="app-shell">
       <header className="topbar">
         <div className="topbar__leading">
-          <button
-            className="mobile-nav-toggle"
-            type="button"
-            onClick={() => setMobileNavOpen((value) => !value)}
-            aria-label="打开全书目录"
-            aria-expanded={mobileNavOpen}
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M2.5 4.25H13.5M2.5 8H13.5M2.5 11.75H10.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-            </svg>
-          </button>
+          {!isHome && (
+            <button
+              className="mobile-nav-toggle"
+              type="button"
+              onClick={() => setMobileNavOpen((value) => !value)}
+              aria-label="打开全书目录"
+              aria-expanded={mobileNavOpen}
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M2.5 4.25H13.5M2.5 8H13.5M2.5 11.75H10.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+              </svg>
+            </button>
+          )}
 
           <a
             className="brand-mark"
-            href={`#${activeChapterId}`}
+            href="#home"
             onClick={(event) => {
               event.preventDefault();
-              navigateToChapter("chapter-1");
+              navigateToHome();
             }}
-            aria-label="从零实现 AI Agent 书目首页"
+            aria-label="打开 Agent Book 首页"
           >
-            <span className="brand-mark__glyph" aria-hidden="true">∿</span>
+            <span className="brand-mark__glyph" aria-hidden="true">▲</span>
             <span className="brand-mark__text">
               <span className="brand-mark__name">AGENT BOOK</span>
               <span className="brand-mark__sub">从零实现 AI Agent</span>
@@ -475,7 +639,7 @@ export function App() {
             className="theme-toggle"
             type="button"
             onClick={() => setDark((value) => !value)}
-            aria-label={dark ? "切换为暖纸浅色主题" : "切换为夜间护眼深色主题"}
+            aria-label={dark ? "切换为晨雾阅读主题" : "切换为夜峰阅读主题"}
           >
             {dark ? (
               <>
@@ -483,14 +647,14 @@ export function App() {
                   <circle cx="8" cy="8" r="3.2" stroke="currentColor" strokeWidth="1.4" />
                   <path d="M8 1.5V3M8 13V14.5M1.5 8H3M13 8H14.5M3.4 3.4L4.5 4.5M11.5 11.5L12.6 12.6M12.6 3.4L11.5 4.5M4.5 11.5L3.4 12.6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
                 </svg>
-                <span>暖纸</span>
+                <span>晨雾</span>
               </>
             ) : (
               <>
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                   <path d="M13.2 10.1A5.5 5.5 0 0 1 5.9 2.8a5.6 5.6 0 1 0 7.3 7.3Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
                 </svg>
-                <span>夜读</span>
+                <span>夜峰</span>
               </>
             )}
           </button>
@@ -501,8 +665,9 @@ export function App() {
         </div>
       </header>
 
-      <div className="mobile-outline-bar">
-        <button
+      {!isHome && (
+        <div className="mobile-outline-bar">
+          <button
           className="mobile-outline-bar__trigger"
           type="button"
           onClick={() => setMobileOutlineOpen((open) => !open)}
@@ -524,9 +689,8 @@ export function App() {
                 href={`#${item.id}`}
                 onClick={(event) => {
                   event.preventDefault();
-                  setActiveSection(item.id);
                   setMobileOutlineOpen(false);
-                  document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  scrollToSection(item.id);
                 }}
                 key={item.id}
               >
@@ -535,8 +699,9 @@ export function App() {
               </a>
             ))}
           </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {searchOpen && (
         <div
@@ -620,11 +785,14 @@ export function App() {
         </div>
       )}
 
-      {mobileNavOpen && (
+      {!isHome && mobileNavOpen && (
         <button className="nav-scrim" type="button" onClick={() => setMobileNavOpen(false)} aria-label="关闭目录抽屉" />
       )}
 
-      <div className="reading-layout">
+      {isHome ? (
+        <HomePage onOpenChapter={navigateToChapter} />
+      ) : (
+        <div className="reading-layout">
         <aside className={`sidebar ${mobileNavOpen ? "sidebar--open" : ""}`} aria-label="全书卷目导航">
           <div className="sidebar__mobile-head">
             <span>全书目录</span>
@@ -719,12 +887,8 @@ export function App() {
                                   href={`#${item.id}`}
                                   onClick={(event) => {
                                     event.preventDefault();
-                                    setActiveSection(item.id);
                                     setMobileNavOpen(false);
-                                    document.getElementById(item.id)?.scrollIntoView({
-                                      behavior: "smooth",
-                                      block: "start"
-                                    });
+                                    scrollToSection(item.id);
                                   }}
                                   aria-current={activeSection === item.id ? "location" : undefined}
                                   key={item.id}
@@ -768,10 +932,10 @@ export function App() {
         <main className="article" id={activeChapter.id}>
           <nav className="breadcrumb" aria-label="面包屑">
             <a
-              href="#chapter-1"
+              href="#home"
               onClick={(event) => {
                 event.preventDefault();
-                navigateToChapter("chapter-1");
+                navigateToHome();
               }}
             >
               Agent Book
@@ -1067,8 +1231,7 @@ export function App() {
                 href={`#${item.id}`}
                 onClick={(event) => {
                   event.preventDefault();
-                  setActiveSection(item.id);
-                  document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  scrollToSection(item.id);
                 }}
                 aria-current={activeSection === item.id ? "location" : undefined}
                 key={item.id}
@@ -1084,7 +1247,8 @@ export function App() {
             <p>{editorial.marginTipBody}</p>
           </div>
         </aside>
-      </div>
+        </div>
+      )}
     </div>
   );
 }
