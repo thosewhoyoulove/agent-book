@@ -1,37 +1,32 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { chapters } from "@agent-book/shared";
 import { AgentLoopSimulator } from "./components/AgentLoopSimulator";
 import { CodeBlock } from "./components/CodeBlock";
-import { chapterContent } from "./content/chapters";
-import { chapterFiveSections, minimalLoopCode, productionLoopCode } from "./content/chapter5";
+import { chapterContent, chapterEditorialMeta } from "./content/chapters";
+import { minimalLoopCode, productionLoopCode } from "./content/chapter5";
+
+type AvailableChapterId = keyof typeof chapterContent;
 
 const progressKeyPrefix = "agent-book-progress";
+const expandedGroupsKey = "agent-book-expanded-groups";
+const expandedChaptersKey = "agent-book-expanded-chapters";
 
-function getInitialChapterId(): keyof typeof chapterContent {
-  if (typeof window !== "undefined") {
-    const hash = window.location.hash.slice(1) as keyof typeof chapterContent;
-    if (hash in chapterContent) return hash;
-  }
-  return "chapter-5";
-}
-
-function getChapterOutline(chapterId: keyof typeof chapterContent) {
-  const sections = chapterContent[chapterId];
-  const extraItems = chapterId === "chapter-5"
-    ? [
-      { id: "code", title: "最小可运行实现" },
-      { id: "simulator", title: "Agent Loop Simulator" },
-      { id: "interview", title: "面试官视角" }
-    ]
-    : [];
-  return [...sections.map((section) => ({ id: section.id, title: section.eyebrow })), ...extraItems, { id: chapterId === "chapter-5" ? "chapter-summary" : `${chapterId}-summary`, title: "本章总结" }];
-}
+const availableChapterOrder: AvailableChapterId[] = [
+  "chapter-1",
+  "chapter-2",
+  "chapter-3",
+  "chapter-4",
+  "chapter-5",
+  "chapter-6",
+  "chapter-9"
+];
 
 const partGroups = [
   {
     id: "part-1",
-    label: "Part 1",
-    title: "基础",
+    label: "卷一",
+    code: "Part 01",
+    title: "基础与边界",
     chapters: [
       chapters.find((chapter) => chapter.id === "chapter-1")!,
       chapters.find((chapter) => chapter.id === "chapter-2")!,
@@ -40,8 +35,9 @@ const partGroups = [
   },
   {
     id: "part-2",
-    label: "Part 2",
-    title: "执行机制",
+    label: "卷二",
+    code: "Part 02",
+    title: "执行机制与运行时",
     chapters: [
       chapters.find((chapter) => chapter.id === "chapter-4")!,
       chapters.find((chapter) => chapter.id === "chapter-5")!,
@@ -50,14 +46,64 @@ const partGroups = [
   },
   {
     id: "part-4",
-    label: "Part 4",
-    title: "上下文",
+    label: "卷四",
+    code: "Part 04",
+    title: "上下文工程",
     chapters: [chapters.find((chapter) => chapter.id === "chapter-9")!]
   }
 ];
 
-const expandedGroupsKey = "agent-book-expanded-groups";
-const expandedChaptersKey = "agent-book-expanded-chapters";
+interface SearchHit {
+  key: string;
+  chapterId: AvailableChapterId;
+  chapterNumber: number;
+  chapterTitle: string;
+  sectionId: string;
+  sectionTitle: string;
+  snippet: string;
+}
+
+function renderFormattedText(text: string): ReactNode {
+  const segments = text.split(/(`[^`]+`)/g);
+  if (segments.length === 1) return text;
+  return segments.map((segment, index) => {
+    if (segment.startsWith("`") && segment.endsWith("`") && segment.length > 2) {
+      return (
+        <code className="inline-code" key={index}>
+          {segment.slice(1, -1)}
+        </code>
+      );
+    }
+    return segment;
+  });
+}
+
+function getInitialChapterId(): AvailableChapterId {
+  if (typeof window !== "undefined") {
+    const hash = window.location.hash.slice(1) as AvailableChapterId;
+    if (hash in chapterContent) return hash;
+  }
+  return "chapter-5";
+}
+
+function getChapterOutline(chapterId: AvailableChapterId) {
+  const sections = chapterContent[chapterId];
+  const extraItems =
+    chapterId === "chapter-5"
+      ? [
+          { id: "architecture", title: "可视化循环架构" },
+          { id: "code", title: "最小可运行实现" },
+          { id: "simulator", title: "交互实验模拟器" },
+          { id: "interview", title: "面试官深度追问" }
+        ]
+      : [];
+  const summaryId = chapterId === "chapter-5" ? "chapter-summary" : `${chapterId}-summary`;
+  return [
+    ...sections.map((section) => ({ id: section.id, title: section.eyebrow })),
+    ...extraItems,
+    { id: summaryId, title: "本章总结" }
+  ];
+}
 
 function readExpandedState(key: string, fallback: string[]): string[] {
   if (typeof window === "undefined") return fallback;
@@ -69,76 +115,105 @@ function readExpandedState(key: string, fallback: string[]): string[] {
   }
 }
 
-function getInitialProgress(chapterId: keyof typeof chapterContent): number {
-  if (typeof window === "undefined") return 18;
-  return Number(window.localStorage.getItem(`${progressKeyPrefix}-${chapterId}`) ?? 18);
+function readProgressMap(): Record<AvailableChapterId, number> {
+  const initial = {} as Record<AvailableChapterId, number>;
+  for (const id of availableChapterOrder) {
+    if (typeof window === "undefined") {
+      initial[id] = 0;
+    } else {
+      const stored = Number(window.localStorage.getItem(`${progressKeyPrefix}-${id}`) ?? 0);
+      initial[id] = Number.isFinite(stored) ? Math.max(0, Math.min(100, stored)) : 0;
+    }
+  }
+  return initial;
 }
 
 function getInitialTheme(): boolean {
   return typeof window !== "undefined" && window.localStorage.getItem("agent-book-theme") === "dark";
 }
 
-function GenericChapterDocument({ chapter, sections, progress, onProgressChange }: {
-  chapter: typeof chapters[number];
-  sections: typeof chapterContent[keyof typeof chapterContent];
-  progress: number;
-  onProgressChange: (value: number) => void;
-}) {
-  return (
-    <main className="article" id={chapter.id}>
-      <div className="breadcrumb"><a href="#chapter-5">Agent Book</a><span>/</span><span>{chapter.section}</span><span>/</span><strong>第 {String(chapter.number).padStart(2, "0")} 章</strong></div>
-      <header className="chapter-header">
-        <div className="article__meta"><span>第 {String(chapter.number).padStart(2, "0")} 章</span><span className="meta-line" /><span>预计阅读 {chapter.duration}</span><span className="meta-status"><i />可阅读</span></div>
-        <h1>{chapter.title}</h1>
-        <p className="article__lead">{chapter.summary}</p>
-        <div className="hero-note"><span className="hero-note__line" /><div><strong>本章目标</strong><p>建立可以解释、可以测试、可以逐步扩展的 Agent 工程基础。</p></div></div>
-      </header>
-      <div className="chapter-flow" aria-label="本章学习路径"><div className="flow-step flow-step--active"><b>01</b><span>理解概念</span></div><i>→</i><div className="flow-step"><b>02</b><span>拆解边界</span></div><i>→</i><div className="flow-step"><b>03</b><span>形成判断</span></div><i>→</i><div className="flow-step"><b>04</b><span>工程落地</span></div></div>
-      {sections.map((section, index) => (
-        <section className="content-section" id={section.id} key={section.id} onMouseEnter={() => onProgressChange(Math.max(progress, Math.min(20 + index * 18, 84)))}>
-          <div className="section-number">0{index + 1}</div>
-          <div className="section-body"><span className="section-kicker">{section.eyebrow}</span><h2>{section.title}</h2>{section.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</div>
-        </section>
-      ))}
-      <section className="concept-grid">
-        <div className="concept-card"><span>原则 01</span><strong>先定边界</strong><p>把模型的建议放进可验证、可停止的程序流程。</p></div>
-        <div className="concept-card"><span>原则 02</span><strong>保留状态</strong><p>每次行动都留下可以观察、回放和恢复的数据。</p></div>
-        <div className="concept-card"><span>原则 03</span><strong>逐步演进</strong><p>先实现小而确定的骨架，再增加模型、工具和持久化能力。</p></div>
-      </section>
-      <section className="chapter-summary" id={`${chapter.id}-summary`}><div><span className="section-kicker">本章总结</span><h2>把概念变成下一步可以验证的工程决策。</h2></div><div className="summary-list"><p><b>主题：</b>{chapter.summary}</p><p><b>章节：</b>{chapter.outline.join("、")}</p><p><b>进度：</b>完成阅读后可以继续下一章的实现。</p></div><button className="button button--primary" onClick={() => onProgressChange(100)}>标记本章完成</button></section>
-    </main>
-  );
+function buildSnippet(paragraphs: string[], keyword: string): string {
+  const full = paragraphs.join(" ").replace(/`/g, "");
+  const lower = full.toLowerCase();
+  const idx = lower.indexOf(keyword.toLowerCase());
+  if (idx === -1) return full.slice(0, 72) + (full.length > 72 ? "…" : "");
+  const start = Math.max(0, idx - 22);
+  const end = Math.min(full.length, idx + keyword.length + 46);
+  return `${start > 0 ? "…" : ""}${full.slice(start, end)}${end < full.length ? "…" : ""}`;
 }
 
 export function App() {
   const [dark, setDark] = useState(getInitialTheme);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [activeChapterId, setActiveChapterId] = useState<keyof typeof chapterContent>(getInitialChapterId);
-  const [progress, setProgress] = useState(() => getInitialProgress(getInitialChapterId()));
+  const [mobileOutlineOpen, setMobileOutlineOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [activeSection, setActiveSection] = useState(() => chapterContent[getInitialChapterId()][0]?.id ?? "opening");
-  const [expandedGroups, setExpandedGroups] = useState(() => readExpandedState(expandedGroupsKey, ["part-2"]));
-  const [expandedChapters, setExpandedChapters] = useState(() => readExpandedState(expandedChaptersKey, ["chapter-5"]));
-  const activeChapter = chapters.find((chapter) => chapter.id === activeChapterId) ?? chapters.find((chapter) => chapter.id === "chapter-5")!;
+  const [selectedHitIndex, setSelectedHitIndex] = useState(0);
+  const [scrollPercent, setScrollPercent] = useState(0);
+
+  const [activeChapterId, setActiveChapterId] = useState<AvailableChapterId>(getInitialChapterId);
+  const [progressMap, setProgressMap] = useState<Record<AvailableChapterId, number>>(readProgressMap);
+  const [activeSection, setActiveSection] = useState(
+    () => chapterContent[getInitialChapterId()][0]?.id ?? "opening"
+  );
+  const [expandedGroups, setExpandedGroups] = useState(() =>
+    readExpandedState(expandedGroupsKey, ["part-1", "part-2", "part-4"])
+  );
+  const [expandedChapters, setExpandedChapters] = useState(() =>
+    readExpandedState(expandedChaptersKey, [getInitialChapterId()])
+  );
+
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const activeChapter =
+    chapters.find((chapter) => chapter.id === activeChapterId) ??
+    chapters.find((chapter) => chapter.id === "chapter-5")!;
   const activeSections = chapterContent[activeChapterId];
-  const activeChapterOutline = getChapterOutline(activeChapterId);
-  const activePartId = partGroups.find((group) => group.chapters.some((chapter) => chapter.id === activeChapterId))?.id ?? "part-2";
+  const editorial = chapterEditorialMeta[activeChapterId];
+  const activeChapterOutline = useMemo(() => getChapterOutline(activeChapterId), [activeChapterId]);
+  const activePart =
+    partGroups.find((group) => group.chapters.some((chapter) => chapter.id === activeChapterId)) ??
+    partGroups[1];
+
+  const currentChapterProgress = progressMap[activeChapterId] ?? 0;
+  const completedChaptersCount = availableChapterOrder.filter((id) => (progressMap[id] ?? 0) >= 100).length;
+
+  const activeOrderIndex = availableChapterOrder.indexOf(activeChapterId);
+  const prevChapterId = activeOrderIndex > 0 ? availableChapterOrder[activeOrderIndex - 1] : undefined;
+  const nextChapterId =
+    activeOrderIndex >= 0 && activeOrderIndex < availableChapterOrder.length - 1
+      ? availableChapterOrder[activeOrderIndex + 1]
+      : undefined;
+  const prevChapter = prevChapterId ? chapters.find((item) => item.id === prevChapterId) : undefined;
+  const nextChapter = nextChapterId ? chapters.find((item) => item.id === nextChapterId) : undefined;
+
+  const updateChapterProgress = (chapterId: AvailableChapterId, nextValue: number) => {
+    const clamped = Math.max(0, Math.min(100, Math.round(nextValue)));
+    setProgressMap((prev) => {
+      const updated = Math.max(prev[chapterId] ?? 0, clamped);
+      if (updated === prev[chapterId]) return prev;
+      window.localStorage.setItem(`${progressKeyPrefix}-${chapterId}`, String(updated));
+      return { ...prev, [chapterId]: updated };
+    });
+  };
 
   useEffect(() => {
     document.documentElement.dataset.theme = dark ? "dark" : "light";
     window.localStorage.setItem("agent-book-theme", dark ? "dark" : "light");
+    const themeMeta = document.querySelector('meta[name="theme-color"]');
+    if (themeMeta) {
+      themeMeta.setAttribute("content", dark ? "#161412" : "#faf7f2");
+    }
   }, [dark]);
 
   useEffect(() => {
-    window.localStorage.setItem(`${progressKeyPrefix}-${activeChapterId}`, String(progress));
-  }, [activeChapterId, progress]);
-
-  useEffect(() => {
     const onHashChange = () => {
-      const nextChapterId = window.location.hash.slice(1) as keyof typeof chapterContent;
-      if (nextChapterId in chapterContent) {
-        setActiveChapterId(nextChapterId);
-        setActiveSection(chapterContent[nextChapterId][0]?.id ?? "opening");
+      const hashTarget = window.location.hash.slice(1) as AvailableChapterId;
+      if (hashTarget in chapterContent) {
+        setActiveChapterId(hashTarget);
+        setActiveSection(chapterContent[hashTarget][0]?.id ?? "opening");
+        setMobileOutlineOpen(false);
+        window.scrollTo({ top: 0, behavior: "smooth" });
       }
     };
     window.addEventListener("hashchange", onHashChange);
@@ -146,16 +221,11 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    setProgress(getInitialProgress(activeChapterId));
-  }, [activeChapterId]);
-
-  useEffect(() => {
-    setExpandedGroups((groups) => groups.includes(activePartId) ? groups : [...groups, activePartId]);
-  }, [activePartId]);
-
-  useEffect(() => {
-    setExpandedChapters((chapterIds) => chapterIds.includes(activeChapterId) ? chapterIds : [...chapterIds, activeChapterId]);
-  }, [activeChapterId]);
+    setExpandedGroups((groups) => (groups.includes(activePart.id) ? groups : [...groups, activePart.id]));
+    setExpandedChapters((chapterIds) =>
+      chapterIds.includes(activeChapterId) ? chapterIds : [...chapterIds, activeChapterId]
+    );
+  }, [activePart.id, activeChapterId]);
 
   useEffect(() => {
     window.localStorage.setItem(expandedGroupsKey, JSON.stringify(expandedGroups));
@@ -166,140 +236,501 @@ export function App() {
   }, [expandedChapters]);
 
   useEffect(() => {
+    const computeScroll = () => {
+      const doc = document.documentElement;
+      const scrollable = doc.scrollHeight - window.innerHeight;
+      if (scrollable <= 0) {
+        setScrollPercent(0);
+        return;
+      }
+      const ratio = Math.max(0, Math.min(100, (window.scrollY / scrollable) * 100));
+      setScrollPercent(ratio);
+      if (ratio > 12) {
+        updateChapterProgress(activeChapterId, Math.min(95, ratio));
+      }
+    };
+    computeScroll();
+    window.addEventListener("scroll", computeScroll, { passive: true });
+    window.addEventListener("resize", computeScroll);
+    return () => {
+      window.removeEventListener("scroll", computeScroll);
+      window.removeEventListener("resize", computeScroll);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeChapterId]);
+
+  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        document.querySelector<HTMLInputElement>("[data-search]")?.focus();
+        setSearchOpen((open) => !open);
+      } else if (event.key === "Escape") {
+        setSearchOpen(false);
+        setMobileNavOpen(false);
+        setMobileOutlineOpen(false);
       }
-      if (event.key === "Escape") setMobileNavOpen(false);
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
   useEffect(() => {
-    const sections = getChapterOutline(activeChapterId).map((item) => document.getElementById(item.id)).filter(Boolean);
-    const observer = new IntersectionObserver((entries) => {
-      const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-      if (visible[0]?.target.id) setActiveSection(visible[0].target.id);
-    }, { rootMargin: "-18% 0px -65% 0px", threshold: [0, 0.25, 0.7] });
-    sections.forEach((section) => section && observer.observe(section));
-    return () => observer.disconnect();
-  }, [activeChapterId]);
-
-  useEffect(() => {
-    if (window.location.hash === `#${activeChapterId}`) {
-      document.getElementById(activeChapterId)?.scrollIntoView({ block: "start" });
+    if (searchOpen) {
+      setSelectedHitIndex(0);
+      window.setTimeout(() => searchInputRef.current?.focus(), 20);
+    } else {
+      setQuery("");
     }
-  }, [activeChapterId]);
+  }, [searchOpen]);
 
   useEffect(() => {
-    document.querySelector<HTMLElement>(`[data-nav-section="${activeSection}"]`)?.scrollIntoView({ block: "nearest" });
+    const sectionNodes = activeChapterOutline
+      .map((item) => document.getElementById(item.id))
+      .filter((node): node is HTMLElement => Boolean(node));
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        if (visible[0]?.target.id) {
+          setActiveSection(visible[0].target.id);
+        }
+      },
+      { rootMargin: "-16% 0px -66% 0px", threshold: [0, 0.25, 0.7] }
+    );
+    sectionNodes.forEach((node) => observer.observe(node));
+    return () => observer.disconnect();
+  }, [activeChapterOutline]);
+
+  useEffect(() => {
+    document.querySelector<HTMLElement>(`[data-nav-section="${activeSection}"]`)?.scrollIntoView({
+      block: "nearest"
+    });
   }, [activeSection]);
 
-  const searchMatches = query.trim().length > 1
-    ? activeSections.filter((section) => `${section.title} ${section.paragraphs.join(" ")}`.includes(query.trim()))
-    : [];
+  const searchHits = useMemo<SearchHit[]>(() => {
+    const trimmed = query.trim();
+    if (!trimmed) {
+      return availableChapterOrder.map((chapterId) => {
+        const meta = chapters.find((item) => item.id === chapterId)!;
+        const firstSection = chapterContent[chapterId][0]!;
+        return {
+          key: chapterId,
+          chapterId,
+          chapterNumber: meta.number,
+          chapterTitle: meta.title,
+          sectionId: chapterId,
+          sectionTitle: meta.section,
+          snippet: meta.summary
+        };
+      });
+    }
 
-  const closeMobileNav = () => setMobileNavOpen(false);
-  const toggleGroup = (groupId: string) => setExpandedGroups((groups) => groups.includes(groupId) ? groups.filter((id) => id !== groupId) : [...groups, groupId]);
-  const toggleChapter = (chapterId: string) => setExpandedChapters((chapterIds) => chapterIds.includes(chapterId) ? chapterIds.filter((id) => id !== chapterId) : [...chapterIds, chapterId]);
-  const focusSearch = () => document.querySelector<HTMLInputElement>("[data-search]")?.focus();
+    const lower = trimmed.toLowerCase();
+    const hits: SearchHit[] = [];
+
+    for (const chapterId of availableChapterOrder) {
+      const meta = chapters.find((item) => item.id === chapterId)!;
+      const sections = chapterContent[chapterId];
+      for (const section of sections) {
+        const haystack = `${meta.title} ${section.eyebrow} ${section.title} ${section.paragraphs.join(" ")}`
+          .replace(/`/g, "")
+          .toLowerCase();
+        if (haystack.includes(lower)) {
+          hits.push({
+            key: `${chapterId}-${section.id}`,
+            chapterId,
+            chapterNumber: meta.number,
+            chapterTitle: meta.title,
+            sectionId: section.id,
+            sectionTitle: `${section.eyebrow} · ${section.title}`,
+            snippet: buildSnippet(section.paragraphs, trimmed)
+          });
+        }
+      }
+    }
+    return hits.slice(0, 12);
+  }, [query]);
+
+  useEffect(() => {
+    setSelectedHitIndex(0);
+  }, [query]);
+
+  const navigateToChapter = (chapterId: AvailableChapterId, targetSectionId?: string) => {
+    setMobileNavOpen(false);
+    setMobileOutlineOpen(false);
+    setSearchOpen(false);
+
+    if (chapterId !== activeChapterId) {
+      window.history.pushState(null, "", `#${chapterId}`);
+      setActiveChapterId(chapterId);
+      const fallbackSection = targetSectionId && targetSectionId !== chapterId
+        ? targetSectionId
+        : chapterContent[chapterId][0]?.id ?? "opening";
+      setActiveSection(fallbackSection);
+      window.requestAnimationFrame(() => {
+        window.setTimeout(() => {
+          if (targetSectionId && targetSectionId !== chapterId) {
+            document.getElementById(targetSectionId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+          } else {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }
+        }, 40);
+      });
+    } else if (targetSectionId && targetSectionId !== chapterId) {
+      setActiveSection(targetSectionId);
+      document.getElementById(targetSectionId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const toggleGroup = (groupId: string) =>
+    setExpandedGroups((groups) =>
+      groups.includes(groupId) ? groups.filter((id) => id !== groupId) : [...groups, groupId]
+    );
+
+  const toggleChapter = (chapterId: string) =>
+    setExpandedChapters((chapterIds) =>
+      chapterIds.includes(chapterId)
+        ? chapterIds.filter((id) => id !== chapterId)
+        : [...chapterIds, chapterId]
+    );
+
+  const activeOutlineLabel =
+    activeChapterOutline.find((item) => item.id === activeSection)?.title ?? activeChapterOutline[0]?.title;
+  const summarySectionId = activeChapterId === "chapter-5" ? "chapter-summary" : `${activeChapterId}-summary`;
 
   return (
     <div className="app-shell">
       <header className="topbar">
         <div className="topbar__leading">
-          <button className="mobile-nav-toggle" onClick={() => setMobileNavOpen((value) => !value)} aria-label="打开章节目录" aria-expanded={mobileNavOpen}>
-            <span /><span /><span />
+          <button
+            className="mobile-nav-toggle"
+            type="button"
+            onClick={() => setMobileNavOpen((value) => !value)}
+            aria-label="打开全书目录"
+            aria-expanded={mobileNavOpen}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M2.5 4.25H13.5M2.5 8H13.5M2.5 11.75H10.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+            </svg>
           </button>
-          <a className="brand-mark" href="#chapter-5" aria-label="返回 Agent Book 章节首页">
-            <span className="brand-mark__glyph">∿</span>
-            <span className="brand-mark__name">AGENT BOOK</span>
+
+          <a
+            className="brand-mark"
+            href={`#${activeChapterId}`}
+            onClick={(event) => {
+              event.preventDefault();
+              navigateToChapter("chapter-1");
+            }}
+            aria-label="从零实现 AI Agent 书目首页"
+          >
+            <span className="brand-mark__glyph" aria-hidden="true">∿</span>
+            <span className="brand-mark__text">
+              <span className="brand-mark__name">AGENT BOOK</span>
+              <span className="brand-mark__sub">从零实现 AI Agent</span>
+            </span>
           </a>
-          <nav className="topbar__nav" aria-label="全局导航">
-            <a href="#chapter-5">章节 <span>⌄</span></a>
-            <a href="#simulator">实验 <span>⌄</span></a>
-            <a href="#code">源码</a>
-            <a href="#interview">学习路径</a>
-          </nav>
+
+          <div className="topbar__running-head" aria-hidden="true">
+            <span className="topbar__divider" />
+            <span className="topbar__part">{activePart.code}</span>
+            <span className="topbar__sep">/</span>
+            <strong className="topbar__chapter">
+              第 {String(activeChapter.number).padStart(2, "0")} 章 · {activeChapter.title}
+            </strong>
+          </div>
         </div>
+
         <div className="topbar__actions">
-          <label className="search-box">
-            <span aria-hidden="true">⌕</span>
-            <input data-search value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索文档" aria-label="搜索本章内容" />
-            <kbd>⌘ K</kbd>
-          </label>
-          <button className="ask-ai-button" onClick={() => document.querySelector<HTMLInputElement>("[data-search]")?.focus()}>问 AI</button>
-          <a className="topbar__source" href="#code">源码</a>
-          <button className="icon-button" onClick={() => setDark((value) => !value)} aria-label={dark ? "切换到浅色主题" : "切换到深色主题"}>
-            <span aria-hidden="true">{dark ? "☼" : "◐"}</span>
+          <button
+            className="search-trigger"
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            aria-label="全局搜索书本内容"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <circle cx="7" cy="7" r="4.75" stroke="currentColor" strokeWidth="1.4" />
+              <path d="M10.6 10.6L13.8 13.8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+            </svg>
+            <span className="search-trigger__placeholder">检索全书章节…</span>
+            <kbd>⌘K</kbd>
           </button>
-          <button className="profile-button" aria-label="打开账户菜单">◎</button>
-          <div className="progress-indicator"><span>进度</span><strong>{progress}%</strong></div>
+
+          <a
+            className="topbar-link"
+            href="https://github.com/thosewhoyoulove/agent-book"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="访问 GitHub 源码仓库"
+          >
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path d="M8 0.2A7.8 7.8 0 0 0 5.53 15.4c.39.07.53-.17.53-.38v-1.36c-2.17.47-2.63-1.05-2.63-1.05-.35-.9-.87-1.14-.87-1.14-.71-.49.05-.48.05-.48.79.06 1.2.81 1.2.81.7 1.2 1.83.85 2.28.65.07-.51.27-.85.5-1.05-1.73-.2-3.55-.87-3.55-3.85 0-.85.3-1.55.8-2.1-.08-.2-.35-1 .08-2.07 0 0 .66-.21 2.15.8a7.44 7.44 0 0 1 3.92 0c1.49-1.01 2.15-.8 2.15-.8.43 1.07.16 1.87.08 2.07.5.55.8 1.25.8 2.1 0 2.99-1.82 3.65-3.56 3.84.28.24.53.72.53 1.46v2.16c0 .21.14.46.54.38A7.8 7.8 0 0 0 8 0.2Z" />
+            </svg>
+            <span>源码仓库</span>
+          </a>
+
+          <button
+            className="theme-toggle"
+            type="button"
+            onClick={() => setDark((value) => !value)}
+            aria-label={dark ? "切换为暖纸浅色主题" : "切换为夜间护眼深色主题"}
+          >
+            {dark ? (
+              <>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <circle cx="8" cy="8" r="3.2" stroke="currentColor" strokeWidth="1.4" />
+                  <path d="M8 1.5V3M8 13V14.5M1.5 8H3M13 8H14.5M3.4 3.4L4.5 4.5M11.5 11.5L12.6 12.6M12.6 3.4L11.5 4.5M4.5 11.5L3.4 12.6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                </svg>
+                <span>暖纸</span>
+              </>
+            ) : (
+              <>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M13.2 10.1A5.5 5.5 0 0 1 5.9 2.8a5.6 5.6 0 1 0 7.3 7.3Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+                </svg>
+                <span>夜读</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        <div className="topbar__progress-track" aria-hidden="true">
+          <div className="topbar__progress-bar" style={{ width: `${scrollPercent}%` }} />
         </div>
       </header>
 
-      {searchMatches.length > 0 && (
-        <div className="search-results" role="status">
-          <span>找到 {searchMatches.length} 个匹配段落</span>
-          {searchMatches.map((section) => <a href={`#${section.id}`} onClick={() => setQuery("")} key={section.id}>{section.title}</a>)}
+      <div className="mobile-outline-bar">
+        <button
+          className="mobile-outline-bar__trigger"
+          type="button"
+          onClick={() => setMobileOutlineOpen((open) => !open)}
+          aria-expanded={mobileOutlineOpen}
+        >
+          <span className="mobile-outline-bar__chapter">
+            第 {String(activeChapter.number).padStart(2, "0")} 章
+          </span>
+          <span className="mobile-outline-bar__section">{activeOutlineLabel}</span>
+          <span className={`mobile-outline-bar__chevron ${mobileOutlineOpen ? "is-open" : ""}`} aria-hidden="true">
+            ⌄
+          </span>
+        </button>
+        {mobileOutlineOpen && (
+          <div className="mobile-outline-bar__menu">
+            {activeChapterOutline.map((item, idx) => (
+              <a
+                className={activeSection === item.id ? "is-active" : ""}
+                href={`#${item.id}`}
+                onClick={(event) => {
+                  event.preventDefault();
+                  setActiveSection(item.id);
+                  setMobileOutlineOpen(false);
+                  document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+                key={item.id}
+              >
+                <i>{String(idx + 1).padStart(2, "0")}</i>
+                <span>{item.title}</span>
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {searchOpen && (
+        <div
+          className="search-modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label="全书章节检索"
+          onClick={() => setSearchOpen(false)}
+        >
+          <div className="search-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="search-modal__input-row">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <circle cx="7" cy="7" r="4.75" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M10.6 10.6L13.8 13.8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              <input
+                ref={searchInputRef}
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "ArrowDown") {
+                    event.preventDefault();
+                    setSelectedHitIndex((idx) => (searchHits.length ? (idx + 1) % searchHits.length : 0));
+                  } else if (event.key === "ArrowUp") {
+                    event.preventDefault();
+                    setSelectedHitIndex((idx) =>
+                      searchHits.length ? (idx - 1 + searchHits.length) % searchHits.length : 0
+                    );
+                  } else if (event.key === "Enter" && searchHits[selectedHitIndex]) {
+                    event.preventDefault();
+                    const hit = searchHits[selectedHitIndex];
+                    navigateToChapter(hit.chapterId, hit.sectionId);
+                  }
+                }}
+                placeholder="输入关键词检索全书（如：AbortSignal、幂等、Schema、Token）…"
+                aria-label="输入搜索词"
+              />
+              <button className="search-modal__esc" type="button" onClick={() => setSearchOpen(false)}>
+                ESC
+              </button>
+            </div>
+
+            <div className="search-modal__caption">
+              {query.trim()
+                ? `共检索到 ${searchHits.length} 处相关章节段落`
+                : "书目速览 · 选择任意章节直达阅读"}
+            </div>
+
+            <div className="search-modal__list" role="listbox">
+              {searchHits.length === 0 ? (
+                <div className="search-modal__empty">未找到包含“{query}”的段落，请尝试搜索协议名或章节概念。</div>
+              ) : (
+                searchHits.map((hit, idx) => (
+                  <button
+                    className={`search-hit ${idx === selectedHitIndex ? "is-selected" : ""}`}
+                    type="button"
+                    role="option"
+                    aria-selected={idx === selectedHitIndex}
+                    onMouseEnter={() => setSelectedHitIndex(idx)}
+                    onClick={() => navigateToChapter(hit.chapterId, hit.sectionId)}
+                    key={hit.key}
+                  >
+                    <div className="search-hit__top">
+                      <span className="search-hit__badge">
+                        第 {String(hit.chapterNumber).padStart(2, "0")} 章 · {hit.chapterTitle}
+                      </span>
+                      <span className="search-hit__section">{hit.sectionTitle}</span>
+                    </div>
+                    <p className="search-hit__snippet">{hit.snippet}</p>
+                  </button>
+                ))
+              )}
+            </div>
+
+            <div className="search-modal__footer">
+              <span><kbd>↑</kbd> <kbd>↓</kbd> 移动选择</span>
+              <span><kbd>↵</kbd> 跳转阅读</span>
+              <span><kbd>ESC</kbd> 关闭面板</span>
+            </div>
+          </div>
         </div>
       )}
 
-      {mobileNavOpen && <button className="nav-scrim" onClick={closeMobileNav} aria-label="关闭章节目录" />}
+      {mobileNavOpen && (
+        <button className="nav-scrim" type="button" onClick={() => setMobileNavOpen(false)} aria-label="关闭目录抽屉" />
+      )}
 
       <div className="reading-layout">
-        <aside className={`sidebar ${mobileNavOpen ? "sidebar--open" : ""}`}>
-          <div className="sidebar__mobile-head"><span>章节目录</span><button type="button" onClick={closeMobileNav} aria-label="关闭章节目录">×</button></div>
-          <div className="sidebar__header">
-            <a className="sidebar__brand" href="#chapter-5" onClick={closeMobileNav}>
-              <span className="sidebar__brand-mark">∿</span>
-              <span><strong>Agent Book</strong><small>从零实现 AI Agent</small></span>
-            </a>
-            <button className="sidebar__search" type="button" onClick={focusSearch} aria-label="搜索文档">
-              <span className="sidebar__search-icon" aria-hidden="true">⌕</span><span>搜索文档</span><kbd>⌘ K</kbd>
+        <aside className={`sidebar ${mobileNavOpen ? "sidebar--open" : ""}`} aria-label="全书卷目导航">
+          <div className="sidebar__mobile-head">
+            <span>全书目录</span>
+            <button type="button" onClick={() => setMobileNavOpen(false)} aria-label="关闭目录">
+              ×
             </button>
           </div>
-          <div className="sidebar__intro">
-            <span className="sidebar__label">学习路径</span>
-            <p>从一次 LLM 调用，到完整 Agent Runtime 的设计与实现。</p>
+
+          <div className="sidebar__bookplate">
+            <span className="sidebar__edition">SOURCE-DRIVEN EDITION</span>
+            <strong>从零实现 AI Agent</strong>
+            <p>原理、架构、TypeScript 源码与生产级工程边界实践。</p>
           </div>
-          <nav className="nav-tree" aria-label="章节目录">
+
+          <nav className="nav-tree" aria-label="章节树">
             {partGroups.map((group) => {
               const groupExpanded = expandedGroups.includes(group.id);
               return (
                 <section className="nav-tree__group" key={group.id}>
-                  <button className="nav-tree__part" type="button" onClick={() => toggleGroup(group.id)} aria-expanded={groupExpanded}>
+                  <button
+                    className="nav-tree__part"
+                    type="button"
+                    onClick={() => toggleGroup(group.id)}
+                    aria-expanded={groupExpanded}
+                  >
                     <span className="nav-tree__chevron" aria-hidden="true">⌄</span>
-                    <span><b>{group.label}</b><em>{group.title}</em></span>
+                    <span className="nav-tree__part-meta">
+                      <b>{group.label}</b>
+                      <em>{group.title}</em>
+                    </span>
                   </button>
+
                   <div className={`nav-tree__chapters ${groupExpanded ? "is-expanded" : ""}`}>
                     {group.chapters.map((chapter) => {
-                      const chapterIsActive = chapter.id === activeChapterId;
+                      const chapterId = chapter.id as AvailableChapterId;
+                      const chapterIsActive = chapterId === activeChapterId;
                       const chapterAvailable = chapter.status === "available" && chapter.id in chapterContent;
                       const chapterExpanded = expandedChapters.includes(chapter.id) && chapterAvailable;
+                      const isCompleted = chapterAvailable && (progressMap[chapterId] ?? 0) >= 100;
+
                       return (
                         <div className="nav-tree__chapter-wrap" key={chapter.id}>
                           <div className={`nav-tree__chapter-row ${chapterIsActive ? "is-active" : ""}`}>
-                            <button className="nav-tree__chapter-toggle" type="button" onClick={() => chapterAvailable && toggleChapter(chapter.id)} aria-expanded={chapterAvailable ? chapterExpanded : undefined} aria-label={`${chapter.title}${chapterAvailable ? (chapterExpanded ? "，收起小节" : "，展开小节") : "，暂未开放"}`} disabled={!chapterAvailable}>
+                            <button
+                              className="nav-tree__chapter-toggle"
+                              type="button"
+                              onClick={() => chapterAvailable && toggleChapter(chapter.id)}
+                              aria-expanded={chapterAvailable ? chapterExpanded : undefined}
+                              aria-label={`${chapter.title}${chapterAvailable ? (chapterExpanded ? "，收起小节" : "，展开小节") : "，暂未开放"}`}
+                              disabled={!chapterAvailable}
+                            >
                               <span className="nav-tree__chevron" aria-hidden="true">⌄</span>
                             </button>
+
                             {chapterAvailable ? (
-                              <a className="nav-tree__chapter-link" href={`#${chapter.id}`} onClick={closeMobileNav} aria-current={chapterIsActive ? "page" : undefined}>
-                                <span className="nav-tree__number">{String(chapter.number).padStart(2, "0")}</span><span className="nav-tree__title">{chapter.title}</span>
+                              <a
+                                className="nav-tree__chapter-link"
+                                href={`#${chapter.id}`}
+                                onClick={(event) => {
+                                  event.preventDefault();
+                                  navigateToChapter(chapterId);
+                                }}
+                                aria-current={chapterIsActive ? "page" : undefined}
+                              >
+                                <span className="nav-tree__number">
+                                  {String(chapter.number).padStart(2, "0")}
+                                </span>
+                                <span className="nav-tree__title">{chapter.title}</span>
+                                {isCompleted && (
+                                  <span className="nav-tree__done" title="已读完本章" aria-label="已读完">
+                                    ✓
+                                  </span>
+                                )}
                               </a>
                             ) : (
                               <button className="nav-tree__chapter-link nav-tree__chapter-link--locked" type="button" disabled>
-                                <span className="nav-tree__number">{String(chapter.number).padStart(2, "0")}</span><span className="nav-tree__title">{chapter.title}</span><span className="nav-tree__status">即将</span>
+                                <span className="nav-tree__number">
+                                  {String(chapter.number).padStart(2, "0")}
+                                </span>
+                                <span className="nav-tree__title">{chapter.title}</span>
+                                <span className="nav-tree__status">撰稿中</span>
                               </button>
                             )}
                           </div>
+
                           {chapterAvailable && chapterIsActive && (
                             <div className={`nav-tree__children ${chapterExpanded ? "is-expanded" : ""}`}>
                               {activeChapterOutline.map((item, index) => (
-                                <a data-nav-section={item.id} className={`nav-tree__child ${activeSection === item.id ? "is-active" : ""}`} href={`#${item.id}`} onClick={() => { setActiveSection(item.id); closeMobileNav(); }} aria-current={activeSection === item.id ? "location" : undefined} key={item.id}>
-                                  <span>{item.title}</span><small>{String(index + 1).padStart(2, "0")}</small>
+                                <a
+                                  data-nav-section={item.id}
+                                  className={`nav-tree__child ${activeSection === item.id ? "is-active" : ""}`}
+                                  href={`#${item.id}`}
+                                  onClick={(event) => {
+                                    event.preventDefault();
+                                    setActiveSection(item.id);
+                                    setMobileNavOpen(false);
+                                    document.getElementById(item.id)?.scrollIntoView({
+                                      behavior: "smooth",
+                                      block: "start"
+                                    });
+                                  }}
+                                  aria-current={activeSection === item.id ? "location" : undefined}
+                                  key={item.id}
+                                >
+                                  <span>{item.title}</span>
+                                  <small>{String(index + 1).padStart(2, "0")}</small>
                                 </a>
                               ))}
                             </div>
@@ -312,73 +743,346 @@ export function App() {
               );
             })}
           </nav>
+
           <div className="sidebar__footer">
-            <div className="progress-ring"><svg viewBox="0 0 36 36" aria-hidden="true"><path d="M18 2.0845a15.9155 15.9155 0 1 1 0 31.831a15.9155 15.9155 0 1 1 0-31.831" /><path className="progress-ring__value" strokeDasharray={`${progress}, 100`} d="M18 2.0845a15.9155 15.9155 0 1 1 0 31.831a15.9155 15.9155 0 1 1 0-31.831" /></svg><strong>{progress}%</strong></div>
-            <div><strong>本章学习进度</strong><span>完成实验以继续</span></div>
+            <div className="progress-ring">
+              <svg viewBox="0 0 36 36" aria-hidden="true">
+                <path d="M18 2.0845a15.9155 15.9155 0 1 1 0 31.831a15.9155 15.9155 0 1 1 0-31.831" />
+                <path
+                  className="progress-ring__value"
+                  strokeDasharray={`${currentChapterProgress}, 100`}
+                  d="M18 2.0845a15.9155 15.9155 0 1 1 0 31.831a15.9155 15.9155 0 1 1 0-31.831"
+                />
+              </svg>
+              <strong>{currentChapterProgress}%</strong>
+            </div>
+            <div className="sidebar__footer-meta">
+              <strong>本章阅读进度</strong>
+              <span>
+                全书已完成 {completedChaptersCount} / {availableChapterOrder.length} 章
+              </span>
+            </div>
           </div>
         </aside>
 
-        {activeChapterId === "chapter-5" ? (
-        <main className="article" id="chapter-5">
-          <div className="breadcrumb"><a href="#chapter-5">Agent Book</a><span>/</span><span>Part 02 · 执行机制</span><span>/</span><strong>第 05 章</strong></div>
+        <main className="article" id={activeChapter.id}>
+          <nav className="breadcrumb" aria-label="面包屑">
+            <a
+              href="#chapter-1"
+              onClick={(event) => {
+                event.preventDefault();
+                navigateToChapter("chapter-1");
+              }}
+            >
+              Agent Book
+            </a>
+            <span aria-hidden="true">/</span>
+            <span>{activeChapter.section}</span>
+            <span aria-hidden="true">/</span>
+            <strong>第 {String(activeChapter.number).padStart(2, "0")} 章</strong>
+          </nav>
+
           <header className="chapter-header">
-            <div className="article__meta"><span>第 05 章</span><span className="meta-line" /><span>预计阅读 45 分钟</span><span className="meta-status"><i />可交互</span></div>
-            <h1>从零实现<br /><span>Agent Loop</span></h1>
-            <p className="article__lead">一次 LLM 调用只是回答的开始。让模型观察工具结果、修正动作并完成任务，需要一段由程序控制的执行循环。</p>
-            <div className="hero-note"><span className="hero-note__line" /><div><strong>本章目标</strong><p>不依赖 Agent 框架，写出一个有工具、有停止条件、能处理失败的 TypeScript Agent。</p></div></div>
+            <div className="article__meta">
+              <span className="article__chapter-no">CHAPTER {String(activeChapter.number).padStart(2, "0")}</span>
+              <span className="meta-line" aria-hidden="true" />
+              <span>预计精读 {activeChapter.duration}</span>
+              <span className={`meta-status ${activeChapterId === "chapter-5" ? "meta-status--interactive" : ""}`}>
+                <i aria-hidden="true" />
+                {editorial.badge}
+              </span>
+            </div>
+
+            <h1>{activeChapter.title}</h1>
+            <p className="article__lead">{activeChapter.summary}</p>
+
+            <div className="hero-note">
+              <span className="hero-note__line" aria-hidden="true" />
+              <div>
+                <strong>本章核心命题</strong>
+                <p>{editorial.goal}</p>
+              </div>
+            </div>
           </header>
 
-          <div className="chapter-flow" aria-label="本章学习路径">
-            <div className="flow-step flow-step--active"><b>01</b><span>看见问题</span></div><i>→</i><div className="flow-step"><b>02</b><span>建立循环</span></div><i>→</i><div className="flow-step"><b>03</b><span>运行实验</span></div><i>→</i><div className="flow-step"><b>04</b><span>工程化</span></div>
+          <div className="chapter-flow" aria-label="本章阅读脉络">
+            {editorial.flowSteps.map((stepLabel, idx) => (
+              <div className="chapter-flow__group" key={stepLabel}>
+                <div className={`flow-step ${idx === 0 ? "flow-step--active" : ""}`}>
+                  <b>0{idx + 1}</b>
+                  <span>{stepLabel}</span>
+                </div>
+                {idx < editorial.flowSteps.length - 1 && <i aria-hidden="true">→</i>}
+              </div>
+            ))}
           </div>
 
-          {chapterFiveSections.map((section, index) => (
-            <section className="content-section" id={section.id} key={section.id} onMouseEnter={() => setProgress(Math.max(progress, Math.min(18 + index * 16, 82)))}>
-              <div className="section-number">0{index + 1}</div>
-              <div className="section-body"><span className="section-kicker">{section.eyebrow}</span><h2>{section.title}</h2>{section.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</div>
+          {activeSections.map((section, index) => (
+            <section className="content-section" id={section.id} key={section.id}>
+              <div className="section-number" aria-hidden="true">
+                §0{index + 1}
+              </div>
+              <div className="section-body">
+                <span className="section-kicker">{section.eyebrow}</span>
+                <h2>{section.title}</h2>
+                {section.paragraphs.map((paragraph, pIndex) => (
+                  <p key={`${section.id}-${pIndex}`}>{renderFormattedText(paragraph)}</p>
+                ))}
+              </div>
             </section>
           ))}
 
-          <section className="concept-grid">
-            <div className="concept-card concept-card--signal"><span>模型</span><strong>决定下一步</strong><p>输出文本或结构化 Tool Call。它只提出建议，不直接执行外部动作。</p></div>
-            <div className="concept-card"><span>Runtime</span><strong>守住边界</strong><p>控制循环、校验参数、记录状态，并提供取消、超时和最大步数。</p></div>
-            <div className="concept-card"><span>Tool</span><strong>改变世界</strong><p>真正访问外部系统的程序能力，必须拥有清晰的输入、输出和权限边界。</p></div>
+          <section className="concept-grid" aria-label="核心工程原则">
+            {editorial.principles.map((item) => (
+              <div
+                className={`concept-card ${item.tone === "accent" ? "concept-card--accent" : ""}`}
+                key={item.tag}
+              >
+                <span>{item.tag}</span>
+                <strong>{item.title}</strong>
+                <p>{item.description}</p>
+              </div>
+            ))}
           </section>
 
-          <div className="diagram-block">
-            <div className="diagram-block__heading"><span className="section-kicker">可视化架构</span><h2>模型与程序轮流推进任务</h2><p>循环发生在“工具结果追加回消息历史”之后。最终回答和失败分支都在这里结束。</p></div>
-            <div className="execution-diagram">
-              <div className="diagram-node diagram-node--user"><span>01</span><strong>User Message</strong><small>任务目标</small></div><div className="diagram-arrow">↓</div>
-              <div className="diagram-node"><span>02</span><strong>Build Context</strong><small>组装消息历史</small></div><div className="diagram-arrow">↓</div>
-              <div className="diagram-node diagram-node--model"><span>03</span><strong>Call LLM</strong><small>模型提出下一步</small></div>
-              <div className="diagram-split"><div className="diagram-branch"><small>没有工具调用</small><div className="diagram-node diagram-node--done"><strong>Final Answer</strong><small>完成</small></div></div><div className="diagram-branch"><small>存在 Tool Call</small><div className="diagram-node diagram-node--tool"><strong>Validate → Execute</strong><small>程序执行</small></div><span className="diagram-return">↺ 追加 Tool Result，继续循环</span></div></div>
+          {activeChapterId === "chapter-5" && (
+            <>
+              <section className="diagram-block" id="architecture">
+                <div className="diagram-block__heading">
+                  <span className="section-kicker">可视化架构图</span>
+                  <h2>模型与宿主程序轮流推进任务</h2>
+                  <p>
+                    闭环发生在“工具结果序列化回消息历史”之后。每一次模型调用只负责观察当前历史并提出下一步意图，最终回答与硬边界熔断都在这里收口。
+                  </p>
+                </div>
+
+                <div className="execution-diagram">
+                  <div className="diagram-stage">
+                    <div className="diagram-node diagram-node--user">
+                      <span>STEP 01 · INPUT</span>
+                      <strong>User Message</strong>
+                      <small>用户提交自然语言目标</small>
+                    </div>
+                    <div className="diagram-connector" aria-hidden="true">
+                      <svg width="20" height="28" viewBox="0 0 20 28" fill="none">
+                        <path d="M10 2V24M10 24L5 19M10 24L15 19" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                    <div className="diagram-node">
+                      <span>STEP 02 · STATE</span>
+                      <strong>Assemble Message History</strong>
+                      <small>汇聚 system / user / 历史观察</small>
+                    </div>
+                    <div className="diagram-connector" aria-hidden="true">
+                      <svg width="20" height="28" viewBox="0 0 20 28" fill="none">
+                        <path d="M10 2V24M10 24L5 19M10 24L15 19" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                    <div className="diagram-node diagram-node--model">
+                      <span>STEP 03 · REASONING</span>
+                      <strong>Call LLM Provider</strong>
+                      <small>模型决策：直接回答或提出 ToolCall</small>
+                    </div>
+                  </div>
+
+                  <div className="diagram-split">
+                    <div className="diagram-branch">
+                      <span className="diagram-branch__tag">分支 A · 无工具调用</span>
+                      <div className="diagram-node diagram-node--done">
+                        <span>TERMINAL</span>
+                        <strong>Return Final Answer</strong>
+                        <small>循环正常收敛，返回最终答复</small>
+                      </div>
+                    </div>
+
+                    <div className="diagram-branch">
+                      <span className="diagram-branch__tag diagram-branch__tag--tool">分支 B · 包含 ToolCall</span>
+                      <div className="diagram-node diagram-node--tool">
+                        <span>EXECUTION BOUNDARY</span>
+                        <strong>Validate Schema → Execute Tool</strong>
+                        <small>参数校验、权限守卫与异常捕获</small>
+                      </div>
+                      <div className="diagram-loopback">
+                        <span>↺ 封装为 tool 消息追加回 Message History，进入下一轮 STEP 02</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section className="code-section" id="code">
+                <span className="section-kicker">最小可运行实现</span>
+                <h2>先把循环骨架写出来，再收紧每一道工程边界</h2>
+                <p>
+                  第一段代码刻意剥离网络重试、流式分片与持久化，只呈现 Agent Loop 最纯粹的控制关系：工具返回结果必须追加回{" "}
+                  <code className="inline-code">messages</code>，下一轮模型推理才具备新的外部观察。
+                </p>
+
+                <CodeBlock
+                  label="examples/mini-agent.ts"
+                  highlightLines={[7, 8, 13, 14, 15, 16, 17]}
+                  caption="清单 5-1：二十行代码表达 Agent Loop 的核心终止条件与观察回填。"
+                >
+                  {minimalLoopCode}
+                </CodeBlock>
+
+                <div className="code-explain">
+                  <div>
+                    <strong>为什么需要 while / for 循环？</strong>
+                    <span>单次工具调用只能换回一次观察。循环赋予模型根据新结果继续检索、修正参数或收敛作答的机会。</span>
+                  </div>
+                  <div>
+                    <strong>为什么必须追加 tool message？</strong>
+                    <span>LLM 本身无状态，下一轮推理只读取传入的 messages。不写回历史，模型就不知道工具刚才返回了什么。</span>
+                  </div>
+                  <div>
+                    <strong>为什么绝不能裸信 arguments？</strong>
+                    <span>模型产出的 JSON 属于不可信外部输入，必须经过 Zod Schema 校验与权限检查才能进入业务函数。</span>
+                  </div>
+                </div>
+
+                <CodeBlock
+                  label="packages/agent-core/src/run-agent.ts"
+                  highlightLines={[4, 5, 13, 14, 19, 20]}
+                  caption="清单 5-2：加入 maxSteps 硬上限、AbortSignal 取消检查与结构化执行器的工程实现。"
+                >
+                  {productionLoopCode}
+                </CodeBlock>
+              </section>
+
+              <AgentLoopSimulator />
+
+              <section className="interview-section" id="interview">
+                <span className="section-kicker">面试官深度追问</span>
+                <h2>从“能写出来”进阶到“能讲清架构权衡”</h2>
+                <div className="interview-question">
+                  <span className="interview-question__badge">Q</span>
+                  <div className="interview-question__body">
+                    <strong>Agent Loop 与传统编排式 Workflow 的本质区别是什么？</strong>
+                    <p>
+                      Workflow 的控制流与分支跳转由工程师在开发期预先写死；Agent Loop 则将“下一步调用哪个工具或直接结束”的局部决策权交给模型，再由宿主程序完成验证与副作用执行。成熟生产系统往往将二者融合：确定性主干采用 Workflow，局部开放探索节点内嵌受控的 Agent Loop。
+                    </p>
+                    <details>
+                      <summary>追问 01 · Tool Calling 究竟是在哪里被执行的？</summary>
+                      <p>
+                        模型端从未执行任何外部函数——模型仅仅输出了一段符合约定的工具名与 JSON 参数建议。真正的函数寻址、Schema 校验、权限拦截与网络请求全部发生在宿主应用侧的{" "}
+                        <code className="inline-code">ToolExecutor</code> 中。
+                      </p>
+                    </details>
+                    <details>
+                      <summary>追问 02 · 线上如何防止 Agent 陷入死循环或打爆账单？</summary>
+                      <p>
+                        在 Runtime 层设置多维硬护栏：单任务最大循环步数（<code className="inline-code">maxSteps</code>）、全局超时{" "}
+                        <code className="inline-code">AbortSignal</code>、累计 Token 预算上限，以及连续相同参数重复调用熔断检测。触碰硬边界后立即转入明确的{" "}
+                        <code className="inline-code">failed</code> 状态交由上层兜底。
+                      </p>
+                    </details>
+                    <details>
+                      <summary>追问 03 · 流式连接（SSE）中途断开，后台如何优雅恢复？</summary>
+                      <p>
+                        将每次模型响应、工具开始、工具结果与状态迁移持久化为有序领域事件与 Checkpoint。客户端断线重连时携带{" "}
+                        <code className="inline-code">Last-Event-ID</code> 增量回放，副作用工具配合幂等键防止重试产生重复扣款或重复通知。
+                      </p>
+                    </details>
+                  </div>
+                </div>
+              </section>
+            </>
+          )}
+
+          <section className="chapter-summary" id={summarySectionId}>
+            <div className="chapter-summary__lead">
+              <span className="section-kicker">本章结语</span>
+              <h2>{editorial.summaryHeading}</h2>
             </div>
-          </div>
-
-          <section className="code-section" id="code">
-            <div className="section-kicker">最小可运行实现</div><h2>先把循环写出来，再解释每个边界</h2><p>下面的代码刻意省略网络、流式传输和持久化，只保留 Agent Loop 的控制关系。关键是：工具结果必须回到 messages，下一次模型调用才有新的观察。</p>
-            <CodeBlock label="mini-agent.ts">{minimalLoopCode}</CodeBlock>
-            <div className="code-explain"><div><strong>为什么需要 while？</strong><span>一次工具调用只能得到一次观察。循环让模型基于新结果重新决定是否继续。</span></div><div><strong>为什么追加 tool message？</strong><span>模型下一轮只看输入上下文。没有消息历史，它无法知道工具刚才返回了什么。</span></div><div><strong>为什么不能直接信任 arguments？</strong><span>模型输出是外部输入。schema 校验把不可信 JSON 变成工具可以接收的类型。</span></div></div>
-            <CodeBlock label="agent-core/run-agent.ts">{productionLoopCode}</CodeBlock>
+            <div className="summary-list">
+              {editorial.summaryItems.map((item) => (
+                <p key={item.label}>
+                  <b>{item.label}：</b>
+                  {item.text}
+                </p>
+              ))}
+            </div>
+            <div className="chapter-summary__actions">
+              <button
+                className={`button ${currentChapterProgress >= 100 ? "button--completed" : "button--primary"}`}
+                type="button"
+                onClick={() => updateChapterProgress(activeChapterId, 100)}
+              >
+                {currentChapterProgress >= 100 ? "✓ 已标记本章完成" : "标记本章已读完"}
+              </button>
+            </div>
           </section>
 
-          <AgentLoopSimulator />
+          <nav className="chapter-pager" aria-label="前后章节翻页">
+            {prevChapter && prevChapterId ? (
+              <a
+                className="chapter-pager__card"
+                href={`#${prevChapter.id}`}
+                onClick={(event) => {
+                  event.preventDefault();
+                  navigateToChapter(prevChapterId);
+                }}
+              >
+                <span className="chapter-pager__dir">← 上一章</span>
+                <strong>
+                  第 {String(prevChapter.number).padStart(2, "0")} 章 · {prevChapter.title}
+                </strong>
+                <small>{prevChapter.section} · 预计 {prevChapter.duration}</small>
+              </a>
+            ) : (
+              <div className="chapter-pager__spacer" aria-hidden="true" />
+            )}
 
-          <section className="interview-section" id="interview">
-            <div className="section-kicker">面试官视角</div><h2>把“会写”变成“会解释”</h2>
-            <div className="interview-question"><span>Q</span><div><strong>Agent Loop 与普通 Workflow 有什么区别？</strong><p>Workflow 的路径通常由程序预先决定；Agent Loop 把下一步动作交给模型提出，再由程序验证和执行。两者可以组合：稳定的业务路径用 Workflow，存在开放式选择的节点交给 Agent。</p><details><summary>继续追问 01 · Tool Calling 到底是谁执行的？</summary><p>模型只生成工具名称和参数。真正的执行发生在应用侧的 Tool Executor 中，它负责注册表查找、参数校验、权限判断和调用函数。</p></details><details><summary>继续追问 02 · 如何避免 Agent 无限调用工具？</summary><p>运行时设置最大步数，还可以增加总耗时、成本、重复调用检测和工具级预算。达到硬边界时返回失败状态，让上层决定是否恢复。</p></details><details><summary>继续追问 03 · SSE 断开后如何恢复？</summary><p>把模型请求、工具执行和状态转换写入可持久化事件或 checkpoint。客户端重连时从最后确认的 Event ID 继续读取，执行端用幂等键避免重复副作用。</p></details></div></div>
-          </section>
-
-          <section className="chapter-summary" id="chapter-summary"><div><span className="section-kicker">本章总结</span><h2>循环很小，边界决定它能否成为 Runtime。</h2></div><div className="summary-list"><p><b>机制：</b>模型决定下一步，程序执行工具，结果回到上下文。</p><p><b>数据：</b>Message History 记录每一轮观察和行动，是可回放的执行状态。</p><p><b>工程：</b>最大步数、参数校验、错误转换、取消和超时把开放式决策放进可控范围。</p></div><button className="button button--primary" onClick={() => setProgress(100)}>标记本章完成</button></section>
+            {nextChapter && nextChapterId ? (
+              <a
+                className="chapter-pager__card chapter-pager__card--next"
+                href={`#${nextChapter.id}`}
+                onClick={(event) => {
+                  event.preventDefault();
+                  navigateToChapter(nextChapterId);
+                }}
+              >
+                <span className="chapter-pager__dir">下一章 →</span>
+                <strong>
+                  第 {String(nextChapter.number).padStart(2, "0")} 章 · {nextChapter.title}
+                </strong>
+                <small>{nextChapter.section} · 预计 {nextChapter.duration}</small>
+              </a>
+            ) : (
+              <div className="chapter-pager__spacer" aria-hidden="true" />
+            )}
+          </nav>
         </main>
-        ) : (
-          <GenericChapterDocument chapter={activeChapter} sections={activeSections} progress={progress} onProgressChange={setProgress} />
-        )}
 
-        <aside className="outline">
-          <div className="outline__title">本章目录 <span>{String(activeChapter.number).padStart(2, "0")}</span></div>
-          <nav>{activeChapterOutline.filter((item) => item.id !== "chapter-summary" && item.id !== `${activeChapterId}-summary`).map((item, index) => <a className={activeSection === item.id ? "is-active" : ""} href={`#${item.id}`} onClick={() => setActiveSection(item.id)} aria-current={activeSection === item.id ? "location" : undefined} key={item.id}><i>{String(index + 1).padStart(2, "0")}</i>{item.title}</a>)}</nav>
-          <div className="outline__tip"><span>实验提示</span><p>先点击“单步执行”，再打开“模拟工具错误”，观察错误如何进入消息历史。</p></div>
+        <aside className="outline" aria-label="本章小节大纲">
+          <div className="outline__title">
+            <span>本章小节</span>
+            <code>CH.{String(activeChapter.number).padStart(2, "0")}</code>
+          </div>
+          <nav>
+            {activeChapterOutline.map((item, index) => (
+              <a
+                className={activeSection === item.id ? "is-active" : ""}
+                href={`#${item.id}`}
+                onClick={(event) => {
+                  event.preventDefault();
+                  setActiveSection(item.id);
+                  document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+                aria-current={activeSection === item.id ? "location" : undefined}
+                key={item.id}
+              >
+                <i>{String(index + 1).padStart(2, "0")}</i>
+                <span>{item.title}</span>
+              </a>
+            ))}
+          </nav>
+
+          <div className="outline__tip">
+            <span>{editorial.marginTipTitle}</span>
+            <p>{editorial.marginTipBody}</p>
+          </div>
         </aside>
       </div>
     </div>
