@@ -788,13 +788,19 @@ export function App() {
               aria-label="打开冒险地图目录"
               aria-expanded={mobileNavOpen}
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path
-                  d="M2.5 4.25H13.5M2.5 8H13.5M2.5 11.75H10.5"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
+              <svg width="16" height="16" viewBox="0 0 16 16" shapeRendering="crispEdges" aria-hidden="true">
+                {mobileNavOpen ? (
+                  <>
+                    <rect x="3" y="7" width="10" height="2" transform="rotate(45 8 8)" fill="currentColor" />
+                    <rect x="3" y="7" width="10" height="2" transform="rotate(-45 8 8)" fill="currentColor" />
+                  </>
+                ) : (
+                  <>
+                    <rect x="2" y="3" width="12" height="2" fill="currentColor" />
+                    <rect x="2" y="7" width="12" height="2" fill="currentColor" />
+                    <rect x="2" y="11" width="12" height="2" fill="currentColor" />
+                  </>
+                )}
               </svg>
             </button>
           )}
