@@ -1,10 +1,36 @@
 import { useEffect, useMemo, useState } from "react";
 import { ScriptedMockProvider, ToolRegistry, runAgent, weatherTool } from "@agent-book/agent-core";
 import type { AgentEvent, Message } from "@agent-book/agent-core";
+import { gameWorlds, type GameWorldId, type WorldSimulatorPreset } from "../content/gameWorlds";
+import { WorldEmblemIcon } from "./GameWorldArt";
 
 type SimulatorEvent = AgentEvent & { id: number };
 type InspectorTab = "state" | "messages" | "tool";
 type MessageViewMode = "structured" | "json";
+type ScenarioMode = "world" | "classic";
+
+const classicScenarioPreset: WorldSimulatorPreset = {
+  consoleTitle: "Agent Loop Simulator",
+  consoleSubtitle: "单步回放一次完整的工具调用循环，观察模型决策、参数校验与消息历史如何协同演进。",
+  badgeText: "DETERMINISTIC MOCK",
+  questName: "经典工程剧本 · 北京户外跑步建议",
+  systemPrompt: "你是一个严谨的天气助手。需要实时信息时先调用天气工具。",
+  userPrompt: "查询今天北京的天气，并告诉我适不适合跑步。",
+  toolCity: "北京",
+  toolDate: "2026-11-11",
+  toolSuccessOutput: {
+    city: "北京",
+    date: "2026-11-11",
+    temperature: 18,
+    condition: "晴",
+    wind: "北风 2 级"
+  },
+  toolErrorMessage: "Weather service unavailable (503)",
+  finalSuccessAnswer:
+    "北京今天 18°C，天气晴朗，北风 2 级。体感舒适，非常适合户外轻装慢跑，早晚温差略大可备一件薄风衣。",
+  finalErrorAnswer:
+    "天气服务暂时不可用（503）。我无法确认北京实时天气，建议稍后重试或查看本地气象预报后再决定跑步计划。"
+};
 
 const eventLabels: Record<AgentEvent["type"], string> = {
   "message-added": "消息入栈",
@@ -22,7 +48,7 @@ const statusLabels: Record<string, string> = {
   idle: "idle · 待启动",
   running: "running · 循环推进中",
   waiting_for_tool: "waiting_for_tool · 执行外部工具",
-  completed: "completed · 已得出回答",
+  completed: "completed · 任务达成",
   failed: "failed · 异常或步数触顶"
 };
 
@@ -79,12 +105,16 @@ function formatToolContent(raw: string): { isError: boolean; formatted: string }
   }
 }
 
-async function collectEvents(simulateError: boolean, maxSteps: number): Promise<SimulatorEvent[]> {
+async function collectEvents(
+  preset: WorldSimulatorPreset,
+  simulateError: boolean,
+  maxSteps: number
+): Promise<SimulatorEvent[]> {
   const registry = new ToolRegistry().register({
     ...weatherTool,
-    async execute(input) {
-      if (simulateError) throw new Error("Weather service unavailable (503)");
-      return weatherTool.execute(input);
+    async execute() {
+      if (simulateError) throw new Error(preset.toolErrorMessage);
+      return preset.toolSuccessOutput as Awaited<ReturnType<typeof weatherTool.execute>>;
     }
   });
   const provider = new ScriptedMockProvider([
@@ -93,14 +123,12 @@ async function collectEvents(simulateError: boolean, maxSteps: number): Promise<
         {
           id: "weather-call-1",
           name: "get_weather",
-          arguments: { city: "北京", date: "2026-11-11" }
+          arguments: { city: preset.toolCity, date: preset.toolDate }
         }
       ]
     },
     {
-      content: simulateError
-        ? "天气服务暂时不可用（503）。我无法确认北京实时天气，建议稍后重试或查看本地气象预报后再决定跑步计划。"
-        : "北京今天 18°C，天气晴朗，北风 2 级。体感舒适，非常适合户外轻装慢跑，早晚温差略大可备一件薄风衣。"
+      content: simulateError ? preset.finalErrorAnswer : preset.finalSuccessAnswer
     }
   ]);
   const events: SimulatorEvent[] = [];
@@ -108,8 +136,8 @@ async function collectEvents(simulateError: boolean, maxSteps: number): Promise<
     await runAgent({
       registry,
       provider,
-      input: "查询今天北京的天气，并告诉我适不适合跑步。",
-      systemPrompt: "你是一个严谨的天气助手。需要实时信息时先调用天气工具。",
+      input: preset.userPrompt,
+      systemPrompt: preset.systemPrompt,
       maxSteps,
       onEvent: (event) => events.push({ ...event, id: events.length })
     });
@@ -119,7 +147,14 @@ async function collectEvents(simulateError: boolean, maxSteps: number): Promise<
   return events;
 }
 
-export function AgentLoopSimulator() {
+export function AgentLoopSimulator({
+  worldId = "stardew",
+  onSimulatorComplete
+}: {
+  worldId?: GameWorldId;
+  onSimulatorComplete?: () => void;
+}) {
+  const [scenarioMode, setScenarioMode] = useState<ScenarioMode>("world");
   const [maxSteps, setMaxSteps] = useState(4);
   const [simulateError, setSimulateError] = useState(false);
   const [events, setEvents] = useState<SimulatorEvent[]>([]);
@@ -130,10 +165,13 @@ export function AgentLoopSimulator() {
   const [playing, setPlaying] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const worldConfig = gameWorlds[worldId];
+  const activePreset = scenarioMode === "world" ? worldConfig.simulator : classicScenarioPreset;
+
   const reload = async (initialCursor = 1) => {
     setPlaying(false);
     setLoading(true);
-    const nextEvents = await collectEvents(simulateError, maxSteps);
+    const nextEvents = await collectEvents(activePreset, simulateError, maxSteps);
     const nextCursor = Math.min(initialCursor, nextEvents.length);
     setEvents(nextEvents);
     setCursor(nextCursor);
@@ -143,9 +181,9 @@ export function AgentLoopSimulator() {
 
   useEffect(() => {
     void reload(1);
-    // 只在实验参数变更时重新生成确定性事件流
+    // 实验世界、剧本模式或参数变更时重新生成确定性事件流
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [simulateError, maxSteps]);
+  }, [worldId, scenarioMode, simulateError, maxSteps]);
 
   useEffect(() => {
     if (!playing) return;
@@ -158,7 +196,7 @@ export function AgentLoopSimulator() {
         setSelectedIndex(current);
         return current + 1;
       });
-    }, 720);
+    }, 700);
     return () => window.clearInterval(timer);
   }, [playing, events.length]);
 
@@ -166,8 +204,14 @@ export function AgentLoopSimulator() {
   const visibleMessages = useMemo(() => getVisibleMessages(visibleEvents), [visibleEvents]);
   const currentEvent = visibleEvents.at(-1);
   const selectedEvent = events[selectedIndex] ?? currentEvent;
-  const hasFinished = cursor >= events.length && !loading;
+  const hasFinished = cursor >= events.length && !loading && events.length > 0;
   const canStepBack = cursor > 1 && !loading;
+
+  useEffect(() => {
+    if (hasFinished) {
+      onSimulatorComplete?.();
+    }
+  }, [hasFinished, onSimulatorComplete]);
 
   const status =
     currentEvent?.type === "completed"
@@ -236,14 +280,38 @@ export function AgentLoopSimulator() {
     <section className="simulator" id="simulator" aria-labelledby="simulator-title">
       <div className="simulator__header">
         <div>
-          <span className="section-kicker">交互实验台 · 01</span>
-          <h2 id="simulator-title">Agent Loop Simulator</h2>
-          <p>单步回放一次完整的工具调用循环，观察模型决策、参数校验与消息历史如何协同演进。</p>
+          <span className="section-kicker">交互机关工坊 · INTERACTIVE QUEST</span>
+          <h2 id="simulator-title">{activePreset.consoleTitle}</h2>
+          <p>{activePreset.consoleSubtitle}</p>
         </div>
-        <div className="simulator__live-badge">
-          <span />
-          deterministic mock
+        <div className="simulator__header-right">
+          <div className="simulator__live-badge">
+            <span />
+            {activePreset.badgeText}
+          </div>
+          <div className="scenario-switcher" role="group" aria-label="实验剧本切换">
+            <button
+              type="button"
+              className={scenarioMode === "world" ? "is-active" : ""}
+              onClick={() => setScenarioMode("world")}
+            >
+              <WorldEmblemIcon worldId={worldId} size={13} />
+              <span>{worldConfig.shortName}剧本</span>
+            </button>
+            <button
+              type="button"
+              className={scenarioMode === "classic" ? "is-active" : ""}
+              onClick={() => setScenarioMode("classic")}
+            >
+              <span>经典天气剧本</span>
+            </button>
+          </div>
         </div>
+      </div>
+
+      <div className="simulator__quest-banner">
+        <span className="simulator__quest-tag">{activePreset.questName}</span>
+        <span className="simulator__quest-prompt">委托目标：“{activePreset.userPrompt}”</span>
       </div>
 
       <div className="simulator__controls">
@@ -260,7 +328,7 @@ export function AgentLoopSimulator() {
             }}
             disabled={loading}
           >
-            {playing ? "暂停播放" : hasFinished ? "重新播放" : "自动播放"}
+            {playing ? "暂停推演" : hasFinished ? "重新回放" : "自动推演"}
           </button>
           <button className="button" type="button" onClick={stepBackward} disabled={!canStepBack}>
             上一步
@@ -269,20 +337,20 @@ export function AgentLoopSimulator() {
             下一步
           </button>
           <button className="button button--ghost" type="button" onClick={jumpToEnd} disabled={loading || hasFinished}>
-            展开全程
+            直达结算
           </button>
           <button className="button button--ghost" type="button" onClick={() => void reload(1)} disabled={loading}>
-            重置
+            重置机关
           </button>
         </div>
 
         <div className="simulator__options">
           <label className="control-field">
-            <span>最大步数 (Max Steps)</span>
+            <span>步数上限 (Max Steps)</span>
             <select value={maxSteps} onChange={(event) => setMaxSteps(Number(event.target.value))}>
-              <option value={1}>1（触发步数上限）</option>
+              <option value={1}>1（触发熔断）</option>
               <option value={2}>2</option>
-              <option value={4}>4（默认）</option>
+              <option value={4}>4（标准）</option>
               <option value={8}>8</option>
             </select>
           </label>
@@ -292,7 +360,7 @@ export function AgentLoopSimulator() {
               checked={simulateError}
               onChange={(event) => setSimulateError(event.target.checked)}
             />
-            <span>模拟工具异常</span>
+            <span>注入工具故障</span>
           </label>
         </div>
       </div>
@@ -300,14 +368,14 @@ export function AgentLoopSimulator() {
       <div className="simulator__workspace">
         <div className="execution-graph">
           <div className="panel-heading">
-            <span>执行轨迹 (Execution Trace)</span>
+            <span>行动轨迹 (Action Log)</span>
             <strong>
-              已推进 {cursor} / {events.length} 事件
+              回合进度 {cursor} / {events.length}
             </strong>
           </div>
           <div className="graph-list">
             {loading ? (
-              <div className="loading-state">正在生成确定性执行快照…</div>
+              <div className="loading-state">正在装载确定性剧本快照…</div>
             ) : (
               graphEvents.map(({ event, index }, graphIndex) => {
                 const visible = index < cursor;
@@ -335,7 +403,7 @@ export function AgentLoopSimulator() {
                       <span className="graph-node__index">{String(graphIndex + 1).padStart(2, "0")}</span>
                       <span className="graph-node__body">
                         <strong>{eventLabels[event.type]}</strong>
-                        <small>{visible ? eventDetail(event) : "尚未执行 · 点击“下一步”推进"}</small>
+                        <small>{visible ? eventDetail(event) : "迷雾未解锁 · 点击“下一步”推进"}</small>
                       </span>
                     </button>
                   </div>
@@ -347,8 +415,8 @@ export function AgentLoopSimulator() {
 
         <div className="inspector-panel">
           <div className="panel-heading">
-            <span>运行检查器 (Runtime Inspector)</span>
-            <code>Event #{String((selectedEvent?.id ?? 0) + 1).padStart(2, "0")}</code>
+            <span>状态检视器 (Runtime Inspector)</span>
+            <code>FRAME #{String((selectedEvent?.id ?? 0) + 1).padStart(2, "0")}</code>
           </div>
           <div className="inspector-tabs" role="tablist" aria-label="执行检查器">
             <button
@@ -358,7 +426,7 @@ export function AgentLoopSimulator() {
               aria-selected={inspectorTab === "state"}
               onClick={() => setInspectorTab("state")}
             >
-              运行状态
+              状态面板
             </button>
             <button
               className={inspectorTab === "messages" ? "is-active" : ""}
@@ -367,7 +435,7 @@ export function AgentLoopSimulator() {
               aria-selected={inspectorTab === "messages"}
               onClick={() => setInspectorTab("messages")}
             >
-              消息历史 <b>{visibleMessages.length}</b>
+              消息卷轴 <b>{visibleMessages.length}</b>
             </button>
             <button
               className={inspectorTab === "tool" ? "is-active" : ""}
@@ -401,14 +469,15 @@ export function AgentLoopSimulator() {
                 </div>
               </div>
               <div className="inspector-detail">
-                <span>当前聚焦事件详情</span>
+                <span>当前聚焦帧详情</span>
                 <strong>{selectedEvent ? eventLabels[selectedEvent.type] : "等待执行"}</strong>
-                <pre>{selectedEvent ? eventDetail(selectedEvent) : "点击左侧执行轨迹节点查看详情。"}</pre>
+                <pre>{selectedEvent ? eventDetail(selectedEvent) : "点击左侧行动轨迹节点查看详情。"}</pre>
               </div>
               <div className="inspector-hint">
-                <span>观察要点</span>
+                <span>机关调试攻略</span>
                 <p>
-                  试着将 <code>Max Steps</code> 调为 <code>1</code> 或勾选“模拟工具异常”，对比硬边界熔断与工具级错误回填的差异。
+                  切换右上角剧本或勾选「注入工具故障」，观察无论游戏外壳如何变化，底层{" "}
+                  <code>runAgent()</code> 的消息追加与异常收敛协议始终保持确定性一致。
                 </p>
               </div>
             </div>
@@ -417,14 +486,14 @@ export function AgentLoopSimulator() {
           {inspectorTab === "messages" && (
             <div className="inspector-content inspector-content--scroll">
               <div className="inspector-subbar">
-                <span className="json-label">APPEND-ONLY MESSAGE HISTORY</span>
+                <span className="json-label">APPEND-ONLY MESSAGE LOG</span>
                 <div className="view-toggle" role="group" aria-label="消息展示格式">
                   <button
                     className={messageViewMode === "structured" ? "is-active" : ""}
                     type="button"
                     onClick={() => setMessageViewMode("structured")}
                   >
-                    卡片视图
+                    对话卡
                   </button>
                   <button
                     className={messageViewMode === "json" ? "is-active" : ""}
@@ -479,7 +548,7 @@ export function AgentLoopSimulator() {
           {inspectorTab === "tool" && (
             <div className="inspector-content inspector-content--scroll">
               {!latestToolCall && !latestToolResult ? (
-                <div className="empty-message">当前游标尚未到达工具调用阶段，请点击“下一步”推进循环。</div>
+                <div className="empty-message">当前游标尚未到达工具调用阶段，请点击“下一步”推进回合。</div>
               ) : (
                 <div className="tool-payload-stack">
                   {latestToolCall && (
@@ -505,8 +574,8 @@ export function AgentLoopSimulator() {
 
       <div className="simulator__timeline">
         <div className="panel-heading">
-          <span>有序事件时间轴 (Event Log)</span>
-          <code>点击已解锁节点可随时回溯切面</code>
+          <span>有序事件时间轴 (Timeline Frames)</span>
+          <code>点击任意已解锁帧回溯切面</code>
         </div>
         <div className="timeline-strip">
           {events.map((event, index) => (

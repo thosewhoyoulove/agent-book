@@ -3,21 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#faf7f2" />
-    <meta name="description" content="从零实现 AI Agent：原理、架构、源码与工程实践" />
-    <title>从零实现 AI Agent · 交互式工程书刊</title>
+    <meta name="theme-color" content="#f5ebd2" />
+    <meta name="description" content="从零实现 AI Agent：多游戏世界驱动的交互式 TypeScript 工程书" />
+    <title>AGENT BOOK · 从零实现 AI Agent</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,400&family=Noto+Serif+SC:wght@500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Serif+SC:wght@600;700&display=swap"
       rel="stylesheet"
     />
     <script>
       try {
         const savedTheme = window.localStorage.getItem("agent-book-theme");
+        const savedWorld = window.localStorage.getItem("agent-book-world");
+        const validWorlds = ["stardew", "celeste", "hollow"];
         document.documentElement.dataset.theme = savedTheme === "dark" ? "dark" : "light";
+        document.documentElement.dataset.world = validWorlds.includes(savedWorld) ? savedWorld : "stardew";
       } catch {
         document.documentElement.dataset.theme = "light";
+        document.documentElement.dataset.world = "stardew";
       }
     </script>
   </head>
