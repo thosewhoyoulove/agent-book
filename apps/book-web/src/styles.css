@@ -650,6 +650,58 @@ kbd {
 .loot-toast > span { min-width: 0; line-height: 1.35; }
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, -8px); } to { opacity: 1; transform: translateX(-50%); } }
 
+/* Audio settings modal */
+.audio-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  display: grid;
+  place-items: start center;
+  overflow-y: auto;
+  padding: 8vh 16px 32px;
+  background: rgba(20, 16, 12, 0.52);
+}
+.audio-panel {
+  width: min(560px, 100%);
+  border: 2px solid var(--ink);
+  color: var(--ink);
+  background: var(--canvas-elevated);
+  box-shadow: var(--shadow-modal);
+  clip-path: var(--pixel-cut);
+}
+.audio-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 20px 20px 16px;
+  border-bottom: 2px solid var(--line-strong);
+  background: linear-gradient(135deg, var(--accent-soft), transparent 68%), var(--canvas-elevated);
+}
+.audio-panel__eyebrow { color: var(--accent); font: 700 9px var(--mono); letter-spacing: .05em; }
+.audio-panel h2 { margin: 8px 0 5px; font-size: 24px; }
+.audio-panel__header p { max-width: 420px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.audio-panel__close {
+  width: 32px; height: 32px; flex: 0 0 auto; padding: 0; border: 2px solid var(--line-strong);
+  color: var(--muted); background: var(--canvas); font-size: 21px; line-height: 1;
+}
+.audio-panel__close:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.audio-panel__body { display: grid; gap: 10px; padding: 16px 20px; }
+.audio-range { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line-strong); background: var(--canvas-soft); }
+.audio-range > span, .audio-control-card__head, .audio-mute-row, .audio-scene-select { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.audio-range output { color: var(--accent); font: 700 11px var(--mono); }
+.audio-range input[type="range"] { width: 100%; accent-color: var(--accent); }
+.audio-control-card { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--line); background: var(--canvas); }
+.audio-control-card__head label { color: var(--ink-body); font-size: 13px; font-weight: 750; }
+.audio-control-card__head span { color: var(--muted); font-size: 10px; text-align: right; }
+.audio-control-card input[type="checkbox"], .audio-mute-row input[type="checkbox"] { accent-color: var(--accent); }
+.audio-range--compact { padding: 0; border: 0; background: transparent; }
+.audio-scene-select, .audio-mute-row { padding: 12px; border: 1px dashed var(--line-strong); background: var(--canvas-soft); }
+.audio-scene-select span, .audio-mute-row span { display: grid; gap: 3px; }
+.audio-scene-select small, .audio-mute-row small { color: var(--muted); font-size: 10px; }
+.audio-scene-select select { min-width: 150px; height: 34px; padding: 0 8px; border: 1px solid var(--line-strong); color: var(--ink); background: var(--canvas); font-size: 12px; }
+.audio-panel__footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 20px 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; line-height: 1.5; }
+
 /* Search modal */
 .search-modal-backdrop {
   position: fixed; inset: 0; z-index: 90; display: flex; align-items: flex-start; justify-content: center;
@@ -1927,6 +1979,14 @@ details p { margin: 8px 0 0; color: var(--muted); font-size: 13px; line-height: 
     width: 36px; min-width: 36px; height: 36px; padding: 0; justify-content: center;
   }
   .world-pill-bar { display: none; }
+  .sfx-toggle span:first-child { display: inline; font: 700 8px var(--mono); }
+  .audio-modal-backdrop { padding: 18px 10px 24px; }
+  .audio-panel__header, .audio-panel__body, .audio-panel__footer { padding-left: 14px; padding-right: 14px; }
+  .audio-panel__footer { align-items: flex-start; flex-direction: column; }
+  .audio-control-card__head { align-items: flex-start; flex-direction: column; gap: 5px; }
+  .audio-control-card__head span { text-align: left; }
+  .audio-scene-select { align-items: flex-start; flex-direction: column; }
+  .audio-scene-select select { width: 100%; }
   .reading-layout { display: block; }
   .sidebar {
     position: fixed; z-index: 80; top: 0; left: 0; width: min(304px, 86vw); height: 100vh;

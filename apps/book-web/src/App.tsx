@@ -1,7 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { chapters } from "@agent-book/shared";
-import { worldBgm } from "./audio/worldBgm";
+import { audioManager } from "./audio/AudioManager";
+import { useAmbientSound } from "./audio/useAmbientSound";
+import { useAudio } from "./audio/useAudio";
 import { AgentLoopSimulator } from "./components/AgentLoopSimulator";
+import { AudioSettingsPanel } from "./components/AudioSettingsPanel";
 import { CodeBlock } from "./components/CodeBlock";
 import { CollectibleSprite, HeroWorldScene, WorldEmblemIcon } from "./components/GameWorldArt";
 import { AdventureSidebar } from "./components/AdventureSidebar";
@@ -206,6 +209,7 @@ function HomePage({
                 type="button"
                 role="tab"
                 aria-selected={active}
+                data-audio="switch"
                 className={`cartridge-card cartridge-card--${item.id} ${active ? "is-active" : ""}`}
                 onClick={() => onSelectWorld(item.id)}
               >
@@ -385,6 +389,7 @@ function HomePage({
 export function App() {
   const [worldId, setWorldId] = useState<GameWorldId>(getInitialWorldId);
   const [dark, setDark] = useState(getInitialTheme);
+  const [audioSettingsOpen, setAudioSettingsOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [mobileOutlineOpen, setMobileOutlineOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -405,6 +410,8 @@ export function App() {
   const [expandedChapters, setExpandedChapters] = useState(() =>
     readExpandedState(expandedChaptersKey, [getInitialChapterId()])
   );
+  const audio = useAudio();
+  useAmbientSound(audio.settings.scene);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const sectionNavigationRef = useRef<{ targetId: string; timeoutId: number } | null>(null);
@@ -442,8 +449,7 @@ export function App() {
   const selectWorld = useCallback(
     (id: GameWorldId, toast = true) => {
       setWorldId(id);
-      worldBgm.unlock();
-      worldBgm.play(id);
+      audioManager.setWorld(id);
       if (toast) {
         const item = gameWorlds[id];
         showLootToast(`已切换游戏卡带：${item.shortName}（${item.title}）`);
@@ -453,18 +459,8 @@ export function App() {
   );
 
   useEffect(() => {
-    worldBgm.play(worldId);
+    audioManager.setWorld(worldId);
   }, [worldId]);
-
-  useEffect(() => {
-    const unlock = () => worldBgm.unlock();
-    window.addEventListener("pointerdown", unlock, { once: true });
-    window.addEventListener("keydown", unlock, { once: true });
-    return () => {
-      window.removeEventListener("pointerdown", unlock);
-      window.removeEventListener("keydown", unlock);
-    };
-  }, []);
 
   useEffect(() => {
     if (!lootToast) return;
@@ -488,6 +484,7 @@ export function App() {
         window.localStorage.setItem(`${progressKeyPrefix}-${chapterId}`, String(updated));
         if (updated >= 100 && previous < 100) {
           const quest = gameWorlds[worldId].chapters[chapterId];
+          audioManager.playUi("success");
           showLootToast(`解锁成就物【${quest.itemName}】· ${quest.rewardText}`);
         }
         return { ...prev, [chapterId]: updated };
@@ -772,12 +769,28 @@ export function App() {
     );
   };
 
+  const handleAudioCapture = (event: MouseEvent<HTMLDivElement>) => {
+    const target = event.target instanceof Element ? event.target.closest<HTMLElement>("button, a, [data-audio]") : null;
+    if (!target || target.getAttribute("aria-disabled") === "true" || target.hasAttribute("disabled")) return;
+    const explicit = target.dataset.audio;
+    if (explicit === "none") return;
+    if (explicit) {
+      audioManager.playUi(explicit as Parameters<typeof audioManager.playUi>[0]);
+      return;
+    }
+    if (target instanceof HTMLButtonElement && target.hasAttribute("aria-expanded")) {
+      audioManager.playUi(target.getAttribute("aria-expanded") === "true" ? "close" : "open");
+      return;
+    }
+    audioManager.playUi(target instanceof HTMLAnchorElement ? "page" : "click");
+  };
+
   const activeOutlineLabel =
     activeChapterOutline.find((item) => item.id === activeSection)?.title ?? activeChapterOutline[0]?.title;
   const summarySectionId = activeChapterId === "chapter-5" ? "chapter-summary" : `${activeChapterId}-summary`;
 
   return (
-    <div className={`app-shell app-shell--${worldId}`}>
+    <div className={`app-shell app-shell--${worldId}`} onClickCapture={handleAudioCapture}>
       <header className="topbar">
         <div className="topbar__leading">
           {!isHome && (
@@ -852,6 +865,7 @@ export function App() {
                 <button
                   key={id}
                   type="button"
+                  data-audio="switch"
                   className={`world-pill ${isSelected ? "is-active" : ""}`}
                   onClick={() => selectWorld(id)}
                   title={`切换至 ${item.shortName} 主题`}
@@ -889,6 +903,18 @@ export function App() {
             </svg>
             <span>源码</span>
           </a>
+
+          <button
+            className="sfx-toggle"
+            type="button"
+            data-audio="none"
+            onClick={() => setAudioSettingsOpen(true)}
+            aria-label="打开声音与环境音设置"
+            aria-pressed={audioSettingsOpen}
+          >
+            <span aria-hidden="true">{audio.settings.muted ? "MUTE" : audio.settings.ambientEnabled || audio.settings.musicEnabled ? "♫" : "SFX"}</span>
+            <span>声音</span>
+          </button>
 
           <button
             className="theme-toggle"
@@ -935,6 +961,18 @@ export function App() {
           </div>
         )}
       </header>
+
+      {audioSettingsOpen && (
+        <AudioSettingsPanel
+          worldId={worldId}
+          settings={audio.settings}
+          ambientAvailable={audio.ambientAvailable}
+          musicAvailable={audio.musicAvailable}
+          onChange={audio.updateSettings}
+          onReset={audio.resetSettings}
+          onClose={() => setAudioSettingsOpen(false)}
+        />
+      )}
 
       {/* 成就/卡带切换浮动通知框 */}
       {lootToast && (
@@ -1389,6 +1427,7 @@ export function App() {
               </div>
               <div className="chapter-summary__actions">
                 <button
+                  data-audio="none"
                   className={`button ${currentChapterProgress >= 100 ? "button--completed" : "button--primary"}`}
                   type="button"
                   onClick={() => updateChapterProgress(activeChapterId, 100, true)}

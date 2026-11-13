@@ -1,9 +1,8 @@
 node_modules
 pnpm-lock.yaml
 dist
-coverage
-.vite
-.env
+apps/book-web/src/assets/private-audio/
+*.xwb
 .env.*
 !.env.example
 .DS_Store
