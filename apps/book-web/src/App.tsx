@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { chapters } from "@agent-book/shared";
+import { worldBgm } from "./audio/worldBgm";
 import { worldSfx } from "./audio/worldSfx";
 import { AgentLoopSimulator } from "./components/AgentLoopSimulator";
 import { CodeBlock } from "./components/CodeBlock";
 import { CollectibleSprite, HeroWorldScene, WorldEmblemIcon } from "./components/GameWorldArt";
 import {
+  BgmToggleIcon,
   ChapterMarkIcon,
   ChevronIcon,
   PartMarkIcon,
@@ -392,6 +394,7 @@ export function App() {
   const [worldId, setWorldId] = useState<GameWorldId>(getInitialWorldId);
   const [dark, setDark] = useState(getInitialTheme);
   const [sfxEnabled, setSfxEnabled] = useState(() => worldSfx.isEnabled());
+  const [bgmEnabled, setBgmEnabled] = useState(() => worldBgm.isEnabled());
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [mobileOutlineOpen, setMobileOutlineOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -449,6 +452,8 @@ export function App() {
     (id: GameWorldId, toast = true) => {
       setWorldId(id);
       worldSfx.play("switch", id);
+      worldBgm.unlock();
+      worldBgm.play(id);
       if (toast) {
         const item = gameWorlds[id];
         showLootToast(`已切换游戏卡带：${item.shortName}（${item.title}）`);
@@ -458,9 +463,25 @@ export function App() {
   );
 
   useEffect(() => {
-    const unsubscribe = worldSfx.subscribe(setSfxEnabled);
+    const unsubscribeSfx = worldSfx.subscribe(setSfxEnabled);
+    const unsubscribeBgm = worldBgm.subscribe(setBgmEnabled);
     return () => {
-      unsubscribe();
+      unsubscribeSfx();
+      unsubscribeBgm();
+    };
+  }, []);
+
+  useEffect(() => {
+    worldBgm.play(worldId);
+  }, [worldId]);
+
+  useEffect(() => {
+    const unlock = () => worldBgm.unlock();
+    window.addEventListener("pointerdown", unlock, { once: true });
+    window.addEventListener("keydown", unlock, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
     };
   }, []);
 
@@ -872,6 +893,29 @@ export function App() {
           >
             <SfxToggleIcon enabled={sfxEnabled} />
             <span>{sfxEnabled ? "音效开" : "音效关"}</span>
+          </button>
+
+          <button
+            className={`bgm-toggle${worldBgm.hasAnyTrack() ? "" : " is-empty"}`}
+            type="button"
+            onClick={() => {
+              worldBgm.unlock();
+              worldBgm.toggle();
+              if (!worldBgm.isEnabled()) return;
+              worldBgm.play(worldId, true);
+            }}
+            aria-pressed={bgmEnabled}
+            aria-label={bgmEnabled ? "关闭背景音乐" : "开启背景音乐"}
+            title={
+              worldBgm.hasAnyTrack()
+                ? bgmEnabled
+                  ? "BGM 开 · 点击关闭"
+                  : "BGM 关 · 点击开启"
+                : "请先放入 apps/book-web/src/assets/bgm/ 主题曲素材"
+            }
+          >
+            <BgmToggleIcon enabled={bgmEnabled} />
+            <span>{bgmEnabled ? "BGM 开" : "BGM 关"}</span>
           </button>
 
           <button

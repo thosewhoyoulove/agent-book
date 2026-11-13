@@ -391,16 +391,21 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .world-pill.is-active { color: var(--ink); background: var(--accent-soft); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent); }
 .world-pill span { white-space: nowrap; }
 
-.search-trigger, .topbar-link, .theme-toggle, .sfx-toggle {
+.search-trigger, .topbar-link, .theme-toggle, .sfx-toggle, .bgm-toggle {
   height: 34px; display: inline-flex; align-items: center; gap: 6px;
   padding: 0 10px; border: 1px solid var(--line-strong); border-radius: 2px;
   color: var(--ink-body); background: var(--canvas-elevated); box-shadow: var(--shadow-sm); font-size: 12px;
 }
-.sfx-toggle[aria-pressed="true"] { border-color: color-mix(in srgb, var(--accent) 55%, var(--line-strong)); color: var(--accent); background: var(--accent-soft); }
-.sfx-toggle[aria-pressed="false"] { color: var(--muted); }
+.sfx-toggle[aria-pressed="true"], .bgm-toggle[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line-strong)); color: var(--accent); background: var(--accent-soft);
+}
+.sfx-toggle[aria-pressed="false"], .bgm-toggle[aria-pressed="false"] { color: var(--muted); }
+.bgm-toggle.is-empty { opacity: 0.72; }
 .search-trigger { width: 150px; color: var(--muted); }
 .search-trigger__placeholder { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
-.search-trigger:hover, .topbar-link:hover, .theme-toggle:hover, .sfx-toggle:hover { border-color: var(--accent); background: var(--accent-soft); }
+.search-trigger:hover, .topbar-link:hover, .theme-toggle:hover, .sfx-toggle:hover, .bgm-toggle:hover {
+  border-color: var(--accent); background: var(--accent-soft);
+}
 kbd { padding: 2px 5px; border: 1px solid var(--line-strong); border-radius: 2px; color: var(--muted); background: var(--canvas-soft); font: 500 10px var(--mono); }
 .topbar__progress-track { position: absolute; right: 0; bottom: -1px; left: 0; height: 3px; pointer-events: none; }
 .topbar__progress-bar { height: 100%; background: repeating-linear-gradient(90deg, var(--accent) 0 12px, var(--tool) 12px 16px, var(--model) 16px 30px); }
@@ -1055,7 +1060,7 @@ details p { margin: 8px 0 0; color: var(--muted); font-size: 13px; line-height: 
     width: 34px; height: 34px; display: grid; place-items: center; padding: 0;
     border: 1px solid var(--line); border-radius: 2px; color: var(--ink); background: var(--canvas-elevated);
   }
-  .brand-mark__sub, .topbar-link span, .search-trigger kbd, .theme-toggle span, .sfx-toggle span { display: none; }
+  .brand-mark__sub, .topbar-link span, .search-trigger kbd, .theme-toggle span, .sfx-toggle span, .bgm-toggle span { display: none; }
   .search-trigger { width: auto; min-width: 42px; }
   .world-pill-bar { display: none; }
   .reading-layout { display: block; }

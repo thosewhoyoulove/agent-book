@@ -242,3 +242,21 @@ export function SfxToggleIcon({ enabled, size = 14 }: { enabled: boolean; size?:
     </svg>
   );
 }
+
+export function BgmToggleIcon({ enabled, size = 14 }: { enabled: boolean; size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M6.2 12.4a1.8 1.8 0 1 1-1.8-1.8"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+      <path d="M6.2 10.6V3.4l6.2-1.2v7.4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M12.4 11.4a1.8 1.8 0 1 1-1.8-1.8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      {!enabled ? (
+        <path d="M2.2 3.2 13.8 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      ) : null}
+    </svg>
+  );
+}
