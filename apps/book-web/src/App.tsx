@@ -5,14 +5,8 @@ import { worldSfx } from "./audio/worldSfx";
 import { AgentLoopSimulator } from "./components/AgentLoopSimulator";
 import { CodeBlock } from "./components/CodeBlock";
 import { CollectibleSprite, HeroWorldScene, WorldEmblemIcon } from "./components/GameWorldArt";
-import {
-  BgmToggleIcon,
-  ChapterMarkIcon,
-  ChevronIcon,
-  PartMarkIcon,
-  SectionArrowIcon,
-  SfxToggleIcon
-} from "./components/NavIcons";
+import { AdventureSidebar } from "./components/AdventureSidebar";
+import { BgmToggleIcon, SfxToggleIcon } from "./components/NavIcons";
 import { chapterContent, chapterEditorialMeta } from "./content/chapters";
 import { minimalLoopCode, productionLoopCode } from "./content/chapter5";
 import {
@@ -434,6 +428,7 @@ export function App() {
 
   const currentChapterProgress = progressMap[activeChapterId] ?? 0;
   const playerStats = useMemo(() => computePlayerStats(progressMap, world), [progressMap, world]);
+  const chapterContentIds = useMemo(() => new Set(Object.keys(chapterContent)), []);
 
   const activeOrderIndex = availableChapterOrder.indexOf(activeChapterId);
   const prevChapterId = activeOrderIndex > 0 ? availableChapterOrder[activeOrderIndex - 1] : undefined;
@@ -1151,197 +1146,32 @@ export function App() {
         />
       ) : (
         <div className="reading-layout">
-          <aside className={`sidebar ${mobileNavOpen ? "sidebar--open" : ""}`} aria-label="全书冒险地图与状态栏">
-            <div className="sidebar__mobile-head">
-              <span>冒险地图 · {world.shortName}</span>
-              <button type="button" onClick={() => setMobileNavOpen(false)} aria-label="关闭目录">
-                ×
-              </button>
-            </div>
-
-            {/* 侧栏玩家角色卡片与卡带快切 */}
-            <div className="sidebar__player-card">
-              <div className="player-card__top">
-                <span className="player-card__avatar">
-                  <WorldEmblemIcon worldId={worldId} size={22} />
-                </span>
-                <div className="player-card__info">
-                  <span className="player-card__level">
-                    LV.{playerStats.level} · {world.metricLabel} {playerStats.worldMetric}
-                  </span>
-                  <strong>{playerStats.rankTitle}</strong>
-                </div>
-              </div>
-
-              <div className="player-card__xp">
-                <div className="player-card__xp-labels">
-                  <span>探索熟练度 (EXP)</span>
-                  <code>
-                    {playerStats.totalExp}/{playerStats.maxExp}
-                  </code>
-                </div>
-                <div className="player-card__xp-bar">
-                  <i style={{ width: `${(playerStats.totalExp / playerStats.maxExp) * 100}%` }} />
-                </div>
-              </div>
-
-              <div className="player-card__worlds" role="group" aria-label="侧栏切换世界">
-                {gameWorldOrder.map((id) => (
-                  <button
-                    key={id}
-                    type="button"
-                    className={id === worldId ? "is-active" : ""}
-                    onClick={() => selectWorld(id, false)}
-                  >
-                    {gameWorlds[id].shortName}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <nav className="nav-tree" aria-label="关卡章节树">
-              {partGroups.map((group, groupIndex) => {
-                const groupExpanded = expandedGroups.includes(group.id);
-                const partMeta = world.partTitles[group.id];
-                return (
-                  <section className="nav-tree__group" key={group.id}>
-                    <button
-                      className="nav-tree__part"
-                      type="button"
-                      onClick={() => toggleGroup(group.id)}
-                      aria-expanded={groupExpanded}
-                    >
-                      <span className="nav-tree__chevron nav-tree__chevron--part" aria-hidden="true">
-                        <ChevronIcon open={groupExpanded} size={12} />
-                      </span>
-                      <span className="nav-tree__part-badge" aria-hidden="true">
-                        <PartMarkIcon worldId={worldId} partIndex={groupIndex} size={28} />
-                      </span>
-                      <span className="nav-tree__part-meta">
-                        <b>{partMeta.label}</b>
-                        <em>{partMeta.title}</em>
-                      </span>
-                    </button>
-
-                    <div className={`nav-tree__chapters ${groupExpanded ? "is-expanded" : ""}`}>
-                      {group.chapters.map((chapter, chapterIndex) => {
-                        const chapterId = chapter.id as AvailableChapterId;
-                        const chapterIsActive = chapterId === activeChapterId;
-                        const chapterAvailable = chapter.status === "available" && chapter.id in chapterContent;
-                        const chapterExpanded = expandedChapters.includes(chapter.id) && chapterAvailable;
-                        const isCompleted = chapterAvailable && (progressMap[chapterId] ?? 0) >= 100;
-
-                        return (
-                          <div className="nav-tree__chapter-wrap" key={chapter.id}>
-                            <div className={`nav-tree__chapter-row ${chapterIsActive ? "is-active" : ""}`}>
-                              <button
-                                className="nav-tree__chapter-toggle"
-                                type="button"
-                                onClick={() => chapterAvailable && toggleChapter(chapter.id)}
-                                aria-expanded={chapterAvailable ? chapterExpanded : undefined}
-                                aria-label={`${chapter.title}${chapterAvailable ? (chapterExpanded ? "，收起小节" : "，展开小节") : "，暂未开放"}`}
-                                disabled={!chapterAvailable}
-                              >
-                                <span className="nav-tree__chapter-lead" aria-hidden="true">
-                                  <span className="nav-tree__chevron nav-tree__chevron--chapter">
-                                    <ChevronIcon open={chapterExpanded} size={10} dense />
-                                  </span>
-                                  <ChapterMarkIcon
-                                    worldId={worldId}
-                                    index={chapterIndex + groupIndex * 3}
-                                    completed={isCompleted}
-                                    size={18}
-                                  />
-                                </span>
-                              </button>
-
-                              {chapterAvailable ? (
-                                <a
-                                  className="nav-tree__chapter-link"
-                                  href={`#${chapter.id}`}
-                                  onClick={(event) => {
-                                    event.preventDefault();
-                                    navigateToChapter(chapterId);
-                                  }}
-                                  aria-current={chapterIsActive ? "page" : undefined}
-                                >
-                                  <span className="nav-tree__number">
-                                    {String(chapter.number).padStart(2, "0")}
-                                  </span>
-                                  <span className="nav-tree__title">{chapter.title}</span>
-                                  <CollectibleSprite worldId={worldId} unlocked={isCompleted} size={14} />
-                                </a>
-                              ) : (
-                                <button
-                                  className="nav-tree__chapter-link nav-tree__chapter-link--locked"
-                                  type="button"
-                                  disabled
-                                >
-                                  <span className="nav-tree__number">
-                                    {String(chapter.number).padStart(2, "0")}
-                                  </span>
-                                  <span className="nav-tree__title">{chapter.title}</span>
-                                  <span className="nav-tree__status">未开放</span>
-                                </button>
-                              )}
-                            </div>
-
-                            {chapterAvailable && chapterIsActive && (
-                              <div className={`nav-tree__children ${chapterExpanded ? "is-expanded" : ""}`}>
-                                {activeChapterOutline.map((item, index) => (
-                                  <a
-                                    data-nav-section={item.id}
-                                    className={`nav-tree__child ${activeSection === item.id ? "is-active" : ""}`}
-                                    href={`#${item.id}`}
-                                    onClick={(event) => {
-                                      event.preventDefault();
-                                      setMobileNavOpen(false);
-                                      scrollToSection(item.id);
-                                    }}
-                                    aria-current={activeSection === item.id ? "location" : undefined}
-                                    key={item.id}
-                                  >
-                                    <span className="nav-tree__child-label">
-                                      {activeSection === item.id ? <SectionArrowIcon /> : null}
-                                      <span>{item.title}</span>
-                                    </span>
-                                    <small>{String(index + 1).padStart(2, "0")}</small>
-                                  </a>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </section>
-                );
-              })}
-            </nav>
-
-            <div className="sidebar__footer">
-              <div className="progress-ring">
-                <svg viewBox="0 0 36 36" aria-hidden="true">
-                  <path d="M18 2.0845a15.9155 15.9155 0 1 1 0 31.831a15.9155 15.9155 0 1 1 0-31.831" />
-                  <path
-                    className="progress-ring__value"
-                    strokeDasharray={`${currentChapterProgress}, 100`}
-                    d="M18 2.0845a15.9155 15.9155 0 1 1 0 31.831a15.9155 15.9155 0 1 1 0-31.831"
-                  />
-                </svg>
-                <strong>{currentChapterProgress}%</strong>
-              </div>
-              <div className="sidebar__footer-meta">
-                <strong>
-                  已集齐 {playerStats.completedCount} / {availableChapterOrder.length} {world.collectibleUnit}
-                  {world.collectibleName}
-                </strong>
-                <button type="button" className="sidebar__home-return" onClick={navigateToHome}>
-                  ← 返回世界地图大厅
-                </button>
-              </div>
-            </div>
-          </aside>
+          <AdventureSidebar
+            worldId={worldId}
+            world={world}
+            mobileNavOpen={mobileNavOpen}
+            onCloseMobile={() => setMobileNavOpen(false)}
+            playerStats={playerStats}
+            partGroups={partGroups}
+            expandedGroups={expandedGroups}
+            expandedChapters={expandedChapters}
+            activeChapterId={activeChapterId}
+            activeSection={activeSection}
+            activeChapterOutline={activeChapterOutline}
+            progressMap={progressMap}
+            availableChapterCount={availableChapterOrder.length}
+            currentChapterProgress={currentChapterProgress}
+            chapterContentIds={chapterContentIds}
+            onSelectWorld={(id) => selectWorld(id, false)}
+            onToggleGroup={toggleGroup}
+            onToggleChapter={toggleChapter}
+            onNavigateChapter={navigateToChapter}
+            onNavigateSection={(sectionId) => {
+              setMobileNavOpen(false);
+              scrollToSection(sectionId);
+            }}
+            onNavigateHome={navigateToHome}
+          />
 
           <main className="article" id={activeChapter.id}>
             <nav className="breadcrumb" aria-label="面包屑">
