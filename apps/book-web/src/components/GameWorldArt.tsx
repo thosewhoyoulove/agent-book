@@ -5,11 +5,20 @@ import hollowIcon from "../assets/world-icons/hollow.png";
 import stardewHero from "../assets/world-art/hero-stardew.jpg";
 import celesteHero from "../assets/world-art/hero-celeste.jpg";
 import hollowHero from "../assets/world-art/hero-hollow.jpg";
+import stardewCollectible from "../assets/nav-sprites/stardew/collectible.png";
+import celesteCollectible from "../assets/nav-sprites/celeste/collectible.png";
+import hollowCollectible from "../assets/nav-sprites/hollow/collectible.png";
 
 const worldIconSrc: Record<GameWorldId, string> = {
   stardew: stardewIcon,
   celeste: celesteIcon,
   hollow: hollowIcon
+};
+
+const collectibleSrc: Record<GameWorldId, string> = {
+  stardew: stardewCollectible,
+  celeste: celesteCollectible,
+  hollow: hollowCollectible
 };
 
 const worldIconAlt: Record<GameWorldId, string> = {
@@ -48,8 +57,8 @@ export function WorldEmblemIcon({ worldId, size = 18 }: { worldId: GameWorldId; 
 }
 
 /**
- * Theme collectible marks for sidebar/home slots.
- * SVG silhouettes stay distinct when locked (no black-boxed PNG + grayscale).
+ * Theme collectible marks for sidebar/home slots — in-game / official sprites.
+ * Transparent PNGs + opacity/grayscale keep locked slots readable (no black boxes).
  */
 export function CollectibleSprite({
   worldId,
@@ -60,70 +69,23 @@ export function CollectibleSprite({
   unlocked: boolean;
   size?: number;
 }) {
-  const className = `collectible-svg collectible-svg--${worldId}${unlocked ? " is-unlocked" : " is-locked"}`;
-
-  if (worldId === "celeste") {
-    return (
-      <svg
-        key="celeste"
-        className={className}
-        width={size}
-        height={size}
-        viewBox="0 0 16 16"
-        aria-hidden="true"
-      >
-        <path
-          d="M8 2.2c1.1 1.4 1.8 2.2 2.6 2.2-.4 1.1-1.3 1.7-2.6 1.7S5.8 5.5 5.4 4.4C6.2 4.4 6.9 3.6 8 2.2Z"
-          fill="currentColor"
-        />
-        <path
-          d="M8 5.8c2.6 0 4.6 2.1 4.6 4.4 0 2.1-1.8 3.6-4.6 3.6S3.4 12.3 3.4 10.2C3.4 7.9 5.4 5.8 8 5.8Z"
-          fill="currentColor"
-        />
-        <circle cx="9.6" cy="9.2" r="0.7" fill="var(--canvas-elevated)" opacity="0.7" />
-        <circle cx="6.8" cy="10.6" r="0.55" fill="var(--canvas-elevated)" opacity="0.55" />
-      </svg>
-    );
-  }
-
-  if (worldId === "hollow") {
-    return (
-      <svg
-        key="hollow"
-        className={className}
-        width={size}
-        height={size}
-        viewBox="0 0 16 16"
-        fill="none"
-        aria-hidden="true"
-      >
-        <path
-          d="M5.1 4.2h5.8v5.4c0 2-1.2 3.4-2.9 3.4S5.1 11.6 5.1 9.6V4.2Z"
-          stroke="currentColor"
-          strokeWidth="1.35"
-        />
-        <path d="M6.2 4.1 5.2 1.8M9.8 4.1 10.8 1.8" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" />
-        <circle cx="6.8" cy="7.4" r="0.85" fill="currentColor" />
-        <circle cx="9.2" cy="7.4" r="0.85" fill="currentColor" />
-      </svg>
-    );
-  }
+  const pixelated = worldId === "stardew" || worldId === "celeste";
+  const className = `collectible-sprite collectible-sprite--${worldId}${
+    unlocked ? " is-unlocked" : " is-locked"
+  }${pixelated ? " is-pixel" : ""}`;
 
   return (
-    <svg
-      key="stardew"
+    <img
       className={className}
+      src={collectibleSrc[worldId]}
+      alt=""
       width={size}
       height={size}
-      viewBox="0 0 16 16"
-      shapeRendering="crispEdges"
+      style={{ width: size, height: size }}
+      draggable={false}
+      decoding="async"
       aria-hidden="true"
-    >
-      <path d="M8 1.8 9.5 5.4h3.8L10.6 7.7l1.1 3.6L8 9.3 4.3 11.3l1.1-3.6L2.7 5.4h3.8L8 1.8Z" fill="currentColor" />
-      <rect x="7" y="11.2" width="2" height="2.4" fill="currentColor" />
-      <rect x="5.4" y="12.2" width="2" height="1.4" fill="currentColor" opacity="0.85" />
-      <rect x="8.6" y="12.2" width="2" height="1.4" fill="currentColor" opacity="0.85" />
-    </svg>
+    />
   );
 }
 
