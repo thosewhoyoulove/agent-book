@@ -3,26 +3,11 @@ import type { GameWorldId } from "../content/gameWorlds";
 import stardewStardrop from "../assets/nav-sprites/stardew/stardrop.png";
 import stardewPrismatic from "../assets/nav-sprites/stardew/prismatic-shard.png";
 import stardewCandy from "../assets/nav-sprites/stardew/magic-rock-candy.png";
-import stardewPearl from "../assets/nav-sprites/stardew/pearl.png";
-import stardewDinoEgg from "../assets/nav-sprites/stardew/dinosaur-egg.png";
-import stardewAncientDoll from "../assets/nav-sprites/stardew/ancient-doll.png";
-import stardewChest from "../assets/nav-sprites/stardew/chest.png";
-import stardewFish from "../assets/nav-sprites/stardew/fish.png";
 
-import celesteStrawberry from "../assets/nav-sprites/celeste/strawberry.png";
 import celesteCrystal from "../assets/nav-sprites/celeste/crystal-heart.png";
-import celesteMountain from "../assets/nav-sprites/celeste/mountain.png";
 import celesteFeather from "../assets/nav-sprites/celeste/feather.png";
-import celesteStrawberries from "../assets/nav-sprites/celeste/strawberries.png";
 import celesteGolden from "../assets/nav-sprites/celeste/golden-berry.png";
 
-import hollowMask from "../assets/nav-sprites/hollow/mask.png";
-import hollowSoul from "../assets/nav-sprites/hollow/soul.png";
-import hollowGeo from "../assets/nav-sprites/hollow/geo.png";
-import hollowNail from "../assets/nav-sprites/hollow/nail.png";
-import hollowEnchanted from "../assets/nav-sprites/hollow/enchanted.png";
-import hollowMasks from "../assets/nav-sprites/hollow/masks.png";
-import hollowWorldsoul from "../assets/nav-sprites/hollow/worldsoul.png";
 import hollowKingsBrand from "../assets/nav-sprites/hollow/kings-brand.png";
 import hollowHuntersMark from "../assets/nav-sprites/hollow/hunters-mark.png";
 import hollowRoyalScepter from "../assets/nav-sprites/hollow/royal-scepter.png";
@@ -34,17 +19,11 @@ const partSprites: Record<GameWorldId, string[]> = {
   hollow: [hollowKingsBrand, hollowHuntersMark, hollowRoyalScepter]
 };
 
+/** Chapter rows cycle the same precious trio the part badges use. */
 const chapterSprites: Record<GameWorldId, string[]> = {
-  stardew: [stardewPearl, stardewDinoEgg, stardewAncientDoll, stardewChest, stardewFish, stardewStardrop],
-  celeste: [
-    celesteStrawberry,
-    celesteCrystal,
-    celesteMountain,
-    celesteFeather,
-    celesteStrawberries,
-    celesteGolden
-  ],
-  hollow: [hollowMask, hollowSoul, hollowGeo, hollowNail, hollowEnchanted, hollowMasks, hollowWorldsoul]
+  stardew: [stardewStardrop, stardewPrismatic, stardewCandy],
+  celeste: [celesteGolden, celesteCrystal, celesteFeather],
+  hollow: [hollowKingsBrand, hollowHuntersMark, hollowRoyalScepter]
 };
 
 function NavSprite({

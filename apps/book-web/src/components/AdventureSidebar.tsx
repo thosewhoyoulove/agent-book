@@ -253,7 +253,7 @@ export function AdventureSidebar({
                               worldId={worldId}
                               index={chapterIndex + groupIndex * 3}
                               completed={isCompleted}
-                              size={18}
+                              size={22}
                             />
                           </span>
                         </button>
