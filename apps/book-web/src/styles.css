@@ -889,9 +889,15 @@ kbd {
 .part-mark,
 .chapter-mark {
   display: block;
-  color: var(--accent);
   flex: 0 0 auto;
-  overflow: visible;
+  object-fit: contain;
+  background: transparent;
+  vertical-align: middle;
+}
+.part-mark.is-pixel,
+.chapter-mark.is-pixel {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 .nav-tree__part-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .nav-tree__part b {
@@ -986,11 +992,10 @@ kbd {
   padding-left: 4px;
 }
 .nav-tree__chapter-toggle:disabled .nav-tree__chapter-lead { opacity: 0.42; }
-.chapter-mark { display: block; color: var(--accent); }
-.chapter-mark.is-todo { opacity: 0.82; }
+.chapter-mark.is-todo { opacity: 0.78; }
 .chapter-mark.is-done {
-  color: var(--success, var(--accent));
-  filter: drop-shadow(2px 2px 0 color-mix(in srgb, currentColor 40%, transparent));
+  opacity: 1;
+  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.35));
 }
 .nav-tree__chapter-link {
   min-width: 0;
@@ -1776,26 +1781,27 @@ details p { margin: 8px 0 0; color: var(--muted); font-size: 13px; line-height: 
   width: 26px; height: 26px; display: grid; place-items: center; padding: 0;
   border: 1px solid var(--line-strong); border-radius: 0; background: var(--canvas); color: var(--faint);
 }
-.collectible-svg {
+.collectible-sprite {
   display: inline-block;
   flex-shrink: 0;
   vertical-align: middle;
-  color: var(--accent);
+  object-fit: contain;
+  background: transparent;
   user-select: none;
   pointer-events: none;
 }
-.collectible-svg.is-locked {
-  opacity: 0.38;
-  color: var(--faint);
+.collectible-sprite.is-pixel {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
-.collectible-svg.is-unlocked {
+.collectible-sprite.is-locked {
+  opacity: 0.32;
+  filter: grayscale(1) brightness(0.85);
+}
+.collectible-sprite.is-unlocked {
   opacity: 1;
-  color: var(--accent);
-  filter: drop-shadow(2px 2px 0 color-mix(in srgb, currentColor 45%, transparent));
+  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.35));
 }
-.collectible-svg--stardew.is-unlocked { color: #c45adf; }
-.collectible-svg--celeste.is-unlocked { color: #e45567; }
-.collectible-svg--hollow.is-unlocked { color: var(--accent); }
 
 .home-hero__map { position: relative; z-index: 1; min-height: 390px; display: grid; place-items: center; }
 .hero-diorama { position: relative; width: min(100%, 560px); }
