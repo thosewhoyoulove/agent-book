@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { chapters } from "@agent-book/shared";
+import { worldSfx } from "./audio/worldSfx";
 import { AgentLoopSimulator } from "./components/AgentLoopSimulator";
 import { CodeBlock } from "./components/CodeBlock";
 import { CollectibleSprite, HeroWorldScene, WorldEmblemIcon } from "./components/GameWorldArt";
+import { ChapterMarkIcon, ChevronIcon, SectionArrowIcon, SfxToggleIcon } from "./components/NavIcons";
 import { chapterContent, chapterEditorialMeta } from "./content/chapters";
 import { minimalLoopCode, productionLoopCode } from "./content/chapter5";
 import {
@@ -383,6 +385,7 @@ function HomePage({
 export function App() {
   const [worldId, setWorldId] = useState<GameWorldId>(getInitialWorldId);
   const [dark, setDark] = useState(getInitialTheme);
+  const [sfxEnabled, setSfxEnabled] = useState(() => worldSfx.isEnabled());
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [mobileOutlineOpen, setMobileOutlineOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -436,6 +439,25 @@ export function App() {
     setLootToast(message);
   }, []);
 
+  const selectWorld = useCallback(
+    (id: GameWorldId, toast = true) => {
+      setWorldId(id);
+      worldSfx.play("switch", id);
+      if (toast) {
+        const item = gameWorlds[id];
+        showLootToast(`已切换游戏卡带：${item.shortName}（${item.title}）`);
+      }
+    },
+    [showLootToast]
+  );
+
+  useEffect(() => {
+    const unsubscribe = worldSfx.subscribe(setSfxEnabled);
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
   useEffect(() => {
     if (!lootToast) return;
     const timer = window.setTimeout(() => setLootToast(null), 3200);
@@ -459,6 +481,14 @@ export function App() {
         if (updated >= 100 && previous < 100) {
           const quest = gameWorlds[worldId].chapters[chapterId];
           showLootToast(`解锁成就物【${quest.itemName}】· ${quest.rewardText}`);
+          const completedCount =
+            availableChapterOrder.filter((id) => (id === chapterId ? updated : prev[id] ?? 0) >= 100)
+              .length;
+          if (completedCount >= availableChapterOrder.length) {
+            worldSfx.play("surprise", worldId);
+          } else {
+            worldSfx.play("collect", worldId);
+          }
         }
         return { ...prev, [chapterId]: updated };
       });
@@ -725,17 +755,21 @@ export function App() {
     updateChapterProgress("chapter-5", 90);
   }, [updateChapterProgress]);
 
-  const toggleGroup = (groupId: string) =>
+  const toggleGroup = (groupId: string) => {
+    worldSfx.play("expand", worldId);
     setExpandedGroups((groups) =>
       groups.includes(groupId) ? groups.filter((id) => id !== groupId) : [...groups, groupId]
     );
+  };
 
-  const toggleChapter = (chapterId: string) =>
+  const toggleChapter = (chapterId: string) => {
+    worldSfx.play("expand", worldId);
     setExpandedChapters((chapterIds) =>
       chapterIds.includes(chapterId)
         ? chapterIds.filter((id) => id !== chapterId)
         : [...chapterIds, chapterId]
     );
+  };
 
   const activeOutlineLabel =
     activeChapterOutline.find((item) => item.id === activeSection)?.title ?? activeChapterOutline[0]?.title;
@@ -812,10 +846,7 @@ export function App() {
                   key={id}
                   type="button"
                   className={`world-pill ${isSelected ? "is-active" : ""}`}
-                  onClick={() => {
-                    setWorldId(id);
-                    showLootToast(`已切换游戏卡带：${item.shortName}（${item.title}）`);
-                  }}
+                  onClick={() => selectWorld(id)}
                   title={`切换至 ${item.shortName} 主题`}
                 >
                   <WorldEmblemIcon worldId={id} size={14} />
@@ -824,6 +855,18 @@ export function App() {
               );
             })}
           </div>
+
+          <button
+            className="sfx-toggle"
+            type="button"
+            onClick={() => worldSfx.toggle()}
+            aria-pressed={sfxEnabled}
+            aria-label={sfxEnabled ? "关闭冒险音效" : "开启冒险音效"}
+            title={sfxEnabled ? "音效开 · 点击静音" : "音效关 · 点击开启"}
+          >
+            <SfxToggleIcon enabled={sfxEnabled} />
+            <span>{sfxEnabled ? "音效开" : "音效关"}</span>
+          </button>
 
           <button
             className="search-trigger"
@@ -855,7 +898,10 @@ export function App() {
           <button
             className="theme-toggle"
             type="button"
-            onClick={() => setDark((value) => !value)}
+            onClick={() => {
+              worldSfx.play("theme", worldId);
+              setDark((value) => !value);
+            }}
             aria-label={dark ? `切换为${world.lightModeLabel}` : `切换为${world.darkModeLabel}`}
           >
             {dark ? (
@@ -1047,8 +1093,9 @@ export function App() {
           world={world}
           progressMap={progressMap}
           onSelectWorld={(id) => {
-            setWorldId(id);
-            showLootToast(`已插入卡带：${gameWorlds[id].shortName}（${gameWorlds[id].title}）`);
+            selectWorld(id, false);
+            const item = gameWorlds[id];
+            showLootToast(`已插入卡带：${item.shortName}（${item.title}）`);
           }}
           onOpenChapter={navigateToChapter}
         />
@@ -1094,7 +1141,7 @@ export function App() {
                     key={id}
                     type="button"
                     className={id === worldId ? "is-active" : ""}
-                    onClick={() => setWorldId(id)}
+                    onClick={() => selectWorld(id, false)}
                   >
                     {gameWorlds[id].shortName}
                   </button>
@@ -1115,7 +1162,7 @@ export function App() {
                       aria-expanded={groupExpanded}
                     >
                       <span className="nav-tree__chevron" aria-hidden="true">
-                        ⌄
+                        <ChevronIcon open={groupExpanded} />
                       </span>
                       <span className="nav-tree__part-meta">
                         <b>{partMeta.label}</b>
@@ -1124,13 +1171,12 @@ export function App() {
                     </button>
 
                     <div className={`nav-tree__chapters ${groupExpanded ? "is-expanded" : ""}`}>
-                      {group.chapters.map((chapter) => {
+                      {group.chapters.map((chapter, chapterIndex) => {
                         const chapterId = chapter.id as AvailableChapterId;
                         const chapterIsActive = chapterId === activeChapterId;
                         const chapterAvailable = chapter.status === "available" && chapter.id in chapterContent;
                         const chapterExpanded = expandedChapters.includes(chapter.id) && chapterAvailable;
                         const isCompleted = chapterAvailable && (progressMap[chapterId] ?? 0) >= 100;
-                        const questMeta = world.chapters[chapterId];
 
                         return (
                           <div className="nav-tree__chapter-wrap" key={chapter.id}>
@@ -1143,8 +1189,14 @@ export function App() {
                                 aria-label={`${chapter.title}${chapterAvailable ? (chapterExpanded ? "，收起小节" : "，展开小节") : "，暂未开放"}`}
                                 disabled={!chapterAvailable}
                               >
-                                <span className="nav-tree__quest-glyph" aria-hidden="true">
-                                  {questMeta?.glyph ?? "◇"}
+                                <span className="nav-tree__mark-stack" aria-hidden="true">
+                                  <ChevronIcon open={chapterExpanded} size={11} />
+                                  <ChapterMarkIcon
+                                    worldId={worldId}
+                                    index={chapterIndex + group.chapters.length}
+                                    completed={isCompleted}
+                                    size={15}
+                                  />
                                 </span>
                               </button>
 
@@ -1194,7 +1246,10 @@ export function App() {
                                     aria-current={activeSection === item.id ? "location" : undefined}
                                     key={item.id}
                                   >
-                                    <span>{item.title}</span>
+                                    <span className="nav-tree__child-label">
+                                      {activeSection === item.id ? <SectionArrowIcon /> : null}
+                                      <span>{item.title}</span>
+                                    </span>
                                     <small>{String(index + 1).padStart(2, "0")}</small>
                                   </a>
                                 ))}
