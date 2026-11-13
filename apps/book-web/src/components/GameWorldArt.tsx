@@ -1,76 +1,33 @@
 import type { AvailableChapterId, GameWorldId } from "../content/gameWorlds";
+import stardewIcon from "../assets/world-icons/stardew.png";
+import celesteIcon from "../assets/world-icons/celeste.png";
+import hollowIcon from "../assets/world-icons/hollow.png";
 
+const worldIconSrc: Record<GameWorldId, string> = {
+  stardew: stardewIcon,
+  celeste: celesteIcon,
+  hollow: hollowIcon
+};
+
+const worldIconAlt: Record<GameWorldId, string> = {
+  stardew: "Stardew Valley",
+  celeste: "Celeste",
+  hollow: "Hollow Knight"
+};
+
+/** Official Steam client icons (ConcernedApe / EXOK / Team Cherry). */
 export function WorldEmblemIcon({ worldId, size = 18 }: { worldId: GameWorldId; size?: number }) {
-  if (worldId === "stardew") {
-    // 像素祝尼魔精灵 (Junimo)
-    return (
-      <svg
-        width={size}
-        height={size}
-        viewBox="0 0 12 12"
-        shapeRendering="crispEdges"
-        aria-hidden="true"
-      >
-        <rect x="5" y="0" width="2" height="1" fill="#3a8442" />
-        <rect x="6" y="1" width="2" height="1" fill="#5ec269" />
-        <rect x="5" y="2" width="1" height="1" fill="#3a8442" />
-        <rect x="3" y="3" width="6" height="1" fill="#76d46b" />
-        <rect x="2" y="4" width="8" height="5" fill="#76d46b" />
-        <rect x="1" y="5" width="10" height="3" fill="#76d46b" />
-        <rect x="3" y="9" width="6" height="2" fill="#52b34c" />
-        <rect x="3" y="11" width="1" height="1" fill="#326e35" />
-        <rect x="8" y="11" width="1" height="1" fill="#326e35" />
-        <rect x="4" y="5" width="1" height="2" fill="#231912" />
-        <rect x="7" y="5" width="1" height="2" fill="#231912" />
-        <rect x="3" y="7" width="1" height="1" fill="#f5989d" />
-        <rect x="8" y="7" width="1" height="1" fill="#f5989d" />
-      </svg>
-    );
-  }
-
-  if (worldId === "celeste") {
-    // 像素红草莓 (Celeste Strawberry)
-    return (
-      <svg
-        width={size}
-        height={size}
-        viewBox="0 0 12 12"
-        shapeRendering="crispEdges"
-        aria-hidden="true"
-      >
-        <rect x="5" y="1" width="2" height="1" fill="#2e8b57" />
-        <rect x="3" y="2" width="6" height="1" fill="#46b878" />
-        <rect x="3" y="3" width="6" height="2" fill="#e45567" />
-        <rect x="2" y="4" width="8" height="4" fill="#e45567" />
-        <rect x="3" y="8" width="6" height="2" fill="#d13b50" />
-        <rect x="4" y="10" width="4" height="1" fill="#b52d40" />
-        <rect x="5" y="11" width="2" height="1" fill="#b52d40" />
-        <rect x="4" y="4" width="1" height="1" fill="#fff5d6" />
-        <rect x="7" y="5" width="1" height="1" fill="#fff5d6" />
-        <rect x="5" y="7" width="1" height="1" fill="#fff5d6" />
-        <rect x="7" y="8" width="1" height="1" fill="#fff5d6" />
-      </svg>
-    );
-  }
-
-  // 像素小骑士面具 (Hollow Knight Mask)
+  const pixelated = worldId === "stardew" || worldId === "celeste";
   return (
-    <svg
+    <img
+      className={`world-emblem-icon world-emblem-icon--${worldId}${pixelated ? " is-pixel" : ""}`}
+      src={worldIconSrc[worldId]}
+      alt={worldIconAlt[worldId]}
       width={size}
       height={size}
-      viewBox="0 0 12 12"
-      shapeRendering="crispEdges"
-      aria-hidden="true"
-    >
-      <rect x="2" y="1" width="2" height="2" fill="#f2efe9" />
-      <rect x="8" y="1" width="2" height="2" fill="#f2efe9" />
-      <rect x="2" y="3" width="3" height="2" fill="#f2efe9" />
-      <rect x="7" y="3" width="3" height="2" fill="#f2efe9" />
-      <rect x="2" y="5" width="8" height="5" fill="#f2efe9" />
-      <rect x="3" y="10" width="6" height="1" fill="#d6d0c4" />
-      <rect x="3" y="6" width="2" height="3" fill="#121621" />
-      <rect x="7" y="6" width="2" height="3" fill="#121621" />
-    </svg>
+      draggable={false}
+      decoding="async"
+    />
   );
 }
 
