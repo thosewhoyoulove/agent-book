@@ -572,7 +572,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .topbar__sep { color: var(--line-strong); }
 
 .world-pill-bar {
-  display: inline-flex; gap: 4px; padding: 4px;
+  display: inline-flex; gap: 6px; padding: 4px;
   border: 2px solid var(--line-strong);
   border-radius: 0;
   background: var(--canvas);
@@ -694,9 +694,13 @@ kbd {
   background: var(--sidebar-bg);
   scrollbar-width: thin;
   scrollbar-color: var(--nav-scroll-thumb) transparent;
+  scrollbar-gutter: stable;
   isolation: isolate;
 }
-.sidebar::-webkit-scrollbar { width: 8px; }
+.sidebar::-webkit-scrollbar { width: 10px; }
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
 .sidebar::-webkit-scrollbar-thumb {
   background: var(--nav-scroll-thumb);
   border-radius: var(--nav-item-radius);
@@ -802,16 +806,18 @@ kbd {
 .player-card__worlds {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 5px;
+  gap: 8px;
   margin-top: 12px;
 }
 .player-card__worlds button {
-  min-height: 30px;
+  box-sizing: border-box;
+  min-height: 32px;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  padding: 4px 4px;
+  padding: 4px 5px;
   border: 1px solid var(--nav-edge-soft);
   border-radius: var(--nav-item-radius);
   color: var(--nav-panel-muted);
@@ -842,7 +848,7 @@ kbd {
   outline-offset: 2px;
 }
 
-.nav-tree { display: grid; gap: 12px; min-width: 0; }
+.nav-tree { display: grid; gap: 14px; min-width: 0; }
 .nav-tree__group { min-width: 0; }
 .nav-tree__part {
   width: 100%;
@@ -878,8 +884,15 @@ kbd {
   display: grid;
   place-items: center;
   color: var(--accent);
+  flex: 0 0 auto;
 }
-.part-mark { display: block; color: var(--accent); }
+.part-mark,
+.chapter-mark {
+  display: block;
+  color: var(--accent);
+  flex: 0 0 auto;
+  overflow: visible;
+}
 .nav-tree__part-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .nav-tree__part b {
   color: var(--accent);
@@ -930,7 +943,7 @@ kbd {
 }
 .nav-tree__chapters.is-expanded { max-height: 760px; }
 .nav-tree__children.is-expanded { max-height: 480px; }
-.nav-tree__chapter-wrap { margin-bottom: 2px; }
+.nav-tree__chapter-wrap { margin-bottom: 4px; }
 .nav-tree__chapter-row {
   min-height: 40px;
   display: grid;
@@ -1181,17 +1194,37 @@ kbd {
   height: 9px;
   border-radius: 0;
 }
+.sidebar--celeste .player-card__worlds {
+  gap: 8px;
+}
 .sidebar--celeste .player-card__worlds button {
   border-radius: 0;
+  border-width: 1px;
+  clip-path: none;
+  box-shadow: none;
+}
+.sidebar--celeste .player-card__worlds button.is-active {
   border-width: 2px;
-  clip-path: var(--pixel-cut-sm);
+  box-shadow: 2px 2px 0 color-mix(in srgb, var(--accent) 35%, transparent);
 }
 .sidebar--celeste .player-card__worlds button:hover {
-  transform: translate(-1px, -1px);
+  transform: none;
+}
+.sidebar--celeste .nav-tree {
+  gap: 16px;
+}
+.sidebar--celeste .nav-tree__part {
+  border: 1px solid color-mix(in srgb, var(--nav-edge-soft) 70%, transparent);
+}
+.sidebar--celeste .nav-tree__part + .nav-tree__chapters {
+  margin-top: 4px;
 }
 .sidebar--celeste .nav-tree__part.is-expanded {
   background: color-mix(in srgb, var(--accent) 10%, transparent);
   box-shadow: inset 3px 0 0 var(--accent);
+}
+.sidebar--celeste .nav-tree__chapter-wrap {
+  margin-bottom: 4px;
 }
 .sidebar--celeste .nav-tree__chapter-row.is-active {
   background: color-mix(in srgb, var(--accent) 14%, transparent);
