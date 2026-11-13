@@ -4,7 +4,13 @@ import { worldSfx } from "./audio/worldSfx";
 import { AgentLoopSimulator } from "./components/AgentLoopSimulator";
 import { CodeBlock } from "./components/CodeBlock";
 import { CollectibleSprite, HeroWorldScene, WorldEmblemIcon } from "./components/GameWorldArt";
-import { ChapterMarkIcon, ChevronIcon, SectionArrowIcon, SfxToggleIcon } from "./components/NavIcons";
+import {
+  ChapterMarkIcon,
+  ChevronIcon,
+  PartMarkIcon,
+  SectionArrowIcon,
+  SfxToggleIcon
+} from "./components/NavIcons";
 import { chapterContent, chapterEditorialMeta } from "./content/chapters";
 import { minimalLoopCode, productionLoopCode } from "./content/chapter5";
 import {
@@ -1150,7 +1156,7 @@ export function App() {
             </div>
 
             <nav className="nav-tree" aria-label="关卡章节树">
-              {partGroups.map((group) => {
+              {partGroups.map((group, groupIndex) => {
                 const groupExpanded = expandedGroups.includes(group.id);
                 const partMeta = world.partTitles[group.id];
                 return (
@@ -1161,8 +1167,11 @@ export function App() {
                       onClick={() => toggleGroup(group.id)}
                       aria-expanded={groupExpanded}
                     >
-                      <span className="nav-tree__chevron" aria-hidden="true">
-                        <ChevronIcon open={groupExpanded} />
+                      <span className="nav-tree__chevron nav-tree__chevron--part" aria-hidden="true">
+                        <ChevronIcon open={groupExpanded} size={12} />
+                      </span>
+                      <span className="nav-tree__part-badge" aria-hidden="true">
+                        <PartMarkIcon worldId={worldId} partIndex={groupIndex} size={28} />
                       </span>
                       <span className="nav-tree__part-meta">
                         <b>{partMeta.label}</b>
@@ -1189,13 +1198,15 @@ export function App() {
                                 aria-label={`${chapter.title}${chapterAvailable ? (chapterExpanded ? "，收起小节" : "，展开小节") : "，暂未开放"}`}
                                 disabled={!chapterAvailable}
                               >
-                                <span className="nav-tree__mark-stack" aria-hidden="true">
-                                  <ChevronIcon open={chapterExpanded} size={11} />
+                                <span className="nav-tree__chapter-lead" aria-hidden="true">
+                                  <span className="nav-tree__chevron nav-tree__chevron--chapter">
+                                    <ChevronIcon open={chapterExpanded} size={10} dense />
+                                  </span>
                                   <ChapterMarkIcon
                                     worldId={worldId}
-                                    index={chapterIndex + group.chapters.length}
+                                    index={chapterIndex + groupIndex * 3}
                                     completed={isCompleted}
-                                    size={15}
+                                    size={18}
                                   />
                                 </span>
                               </button>

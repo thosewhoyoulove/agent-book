@@ -1,82 +1,80 @@
 import type { GameWorldId } from "../content/gameWorlds";
 
-export function ChevronIcon({ open = false, size = 14 }: { open?: boolean; size?: number }) {
+/** Pixel-style filled caret used across the sidebar tree. */
+export function ChevronIcon({
+  open = false,
+  size = 12,
+  dense = false
+}: {
+  open?: boolean;
+  size?: number;
+  dense?: boolean;
+}) {
   return (
     <svg
-      className={`nav-chevron-icon${open ? " is-open" : ""}`}
+      className={`nav-chevron-icon${open ? " is-open" : ""}${dense ? " is-dense" : ""}`}
       width={size}
       height={size}
-      viewBox="0 0 16 16"
-      fill="none"
+      viewBox="0 0 12 12"
+      shapeRendering="crispEdges"
       aria-hidden="true"
     >
-      <path
-        d="M4.2 6.2 8 10l3.8-3.8"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      {/* Closed: points right ▶ ; Open: points down ▼ */}
+      {open ? (
+        <path d="M2 4h8L6 9z" fill="currentColor" />
+      ) : (
+        <path d="M4 2v8l5-4z" fill="currentColor" />
+      )}
     </svg>
   );
 }
 
 export function SectionArrowIcon({ size = 10 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 12 12" fill="none" aria-hidden="true">
-      <path
-        d="M3.5 2.5 7.5 6l-4 3.5"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+    <svg
+      className="nav-section-arrow"
+      width={size}
+      height={size}
+      viewBox="0 0 12 12"
+      shapeRendering="crispEdges"
+      aria-hidden="true"
+    >
+      <path d="M3 2v8l6-4z" fill="currentColor" />
     </svg>
   );
 }
 
-/** Themed chapter mark replacing emoji glyphs in the sidebar. */
-export function ChapterMarkIcon({
+/** Large part / volume badge — intentionally bigger than chapter marks. */
+export function PartMarkIcon({
   worldId,
-  index = 0,
-  completed = false,
-  size = 16
+  partIndex = 0,
+  size = 26
 }: {
   worldId: GameWorldId;
-  index?: number;
-  completed?: boolean;
+  partIndex?: number;
   size?: number;
 }) {
-  const tone = completed ? "is-done" : "is-todo";
+  const variant = partIndex % 3;
 
   if (worldId === "stardew") {
-    const variant = index % 3;
     return (
-      <svg
-        className={`chapter-mark chapter-mark--stardew ${tone}`}
-        width={size}
-        height={size}
-        viewBox="0 0 16 16"
-        fill="none"
-        aria-hidden="true"
-      >
-        <circle cx="8" cy="8" r="7" fill="currentColor" opacity="0.12" />
+      <svg className="part-mark part-mark--stardew" width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="1" y="1" width="22" height="22" rx="3" fill="currentColor" opacity="0.12" />
+        <rect x="1" y="1" width="22" height="22" rx="3" stroke="currentColor" strokeWidth="1.5" fill="none" opacity="0.35" />
         {variant === 0 && (
           <>
-            <path d="M8 3.2c1.8 1.4 2.6 3 2.6 4.8S9.4 12.2 8 12.2 5.4 9.8 5.4 8 6.2 4.6 8 3.2Z" fill="currentColor" />
-            <path d="M8 6.2v5" stroke="#fff8e8" strokeWidth="1.2" strokeLinecap="round" />
+            <path d="M12 4c3 2.4 4.4 5 4.4 8S14.8 19 12 19 7.6 15 7.6 12 9 6.4 12 4Z" fill="currentColor" />
+            <path d="M12 9v8" stroke="#fff8e8" strokeWidth="1.6" strokeLinecap="round" />
           </>
         )}
         {variant === 1 && (
-          <>
-            <path d="M8 2.8 9.2 6.4h3.6L10 8.7l1.1 3.6L8 10.3l-3.1 2 1.1-3.6-2.8-2.3h3.6L8 2.8Z" fill="currentColor" />
-          </>
+          <path d="M12 4.2 14 9.6h5.4L15.2 13l1.7 5.2L12 15.4 7.1 18.2 8.8 13 4.6 9.6H10L12 4.2Z" fill="currentColor" />
         )}
         {variant === 2 && (
           <>
-            <rect x="7.1" y="3" width="1.8" height="8.5" rx="0.6" fill="currentColor" />
-            <path d="M4.4 7.2h7.2l-1.4 2.8H5.8L4.4 7.2Z" fill="currentColor" />
-            <circle cx="8" cy="12.4" r="1.2" fill="currentColor" />
+            <rect x="10.6" y="4.2" width="2.8" height="12.4" rx="1" fill="currentColor" />
+            <path d="M6.2 11h11.6l-2.2 4.2H8.4L6.2 11Z" fill="currentColor" />
+            <circle cx="12" cy="18.4" r="1.8" fill="currentColor" />
           </>
         )}
       </svg>
@@ -84,62 +82,143 @@ export function ChapterMarkIcon({
   }
 
   if (worldId === "celeste") {
-    const variant = index % 3;
     return (
-      <svg
-        className={`chapter-mark chapter-mark--celeste ${tone}`}
-        width={size}
-        height={size}
-        viewBox="0 0 16 16"
-        fill="none"
-        aria-hidden="true"
-      >
-        <circle cx="8" cy="8" r="7" fill="currentColor" opacity="0.12" />
-        {variant === 0 && <path d="M8 2.6 12.4 8 8 13.4 3.6 8 8 2.6Z" fill="currentColor" />}
+      <svg className="part-mark part-mark--celeste" width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="1" y="1" width="22" height="22" rx="3" fill="currentColor" opacity="0.12" />
+        <rect x="1" y="1" width="22" height="22" rx="3" stroke="currentColor" strokeWidth="1.5" fill="none" opacity="0.35" />
+        {variant === 0 && <path d="M12 3.6 18.4 12 12 20.4 5.6 12 12 3.6Z" fill="currentColor" />}
         {variant === 1 && (
-          <path
-            d="M8 13.2c-2.8-1.8-4.4-3.6-4.4-5.5A2.7 2.7 0 0 1 8 5.2a2.7 2.7 0 0 1 4.4 2.5c0 1.9-1.6 3.7-4.4 5.5Z"
-            fill="currentColor"
-          />
+          <path d="M12 19.6c-4-2.6-6.2-5.1-6.2-7.8A3.8 3.8 0 0 1 12 8a3.8 3.8 0 0 1 6.2 3.8c0 2.7-2.2 5.2-6.2 7.8Z" fill="currentColor" />
         )}
         {variant === 2 && (
           <>
-            <path d="M8 3.1 9.5 6.4 13 6.8 10.4 9.2l.8 3.4L8 11l-3.2 1.6.8-3.4L3 6.8l3.5-.4L8 3.1Z" fill="currentColor" />
-            <circle cx="8" cy="8" r="1.4" fill="#fff8f4" opacity="0.85" />
+            <path d="M12 4 14.2 9.2 20 9.8 15.6 13.4l1.3 5.4L12 16.2 7.1 18.8l1.3-5.4L4 9.8l5.8-.6L12 4Z" fill="currentColor" />
+            <circle cx="12" cy="12" r="2" fill="#fff8f4" opacity="0.9" />
           </>
         )}
       </svg>
     );
   }
 
+  return (
+    <svg className="part-mark part-mark--hollow" width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="1" y="1" width="22" height="22" rx="3" fill="currentColor" opacity="0.12" />
+      <rect x="1" y="1" width="22" height="22" rx="3" stroke="currentColor" strokeWidth="1.5" fill="none" opacity="0.35" />
+      {variant === 0 && (
+        <>
+          <path d="M7.4 5.4h9.2v8c0 3-1.9 5.2-4.6 5.2S7.4 16.4 7.4 13.4v-8Z" fill="currentColor" />
+          <circle cx="10" cy="11" r="1.3" fill="#0b0d12" />
+          <circle cx="14" cy="11" r="1.3" fill="#0b0d12" />
+        </>
+      )}
+      {variant === 1 && (
+        <path d="M12 4c4 0 7 2.2 7 5.6S15.8 16 12 19.4C8.2 16 5 13 5 9.6S8 4 12 4Z" fill="currentColor" />
+      )}
+      {variant === 2 && (
+        <>
+          <circle cx="12" cy="12" r="6.4" stroke="currentColor" strokeWidth="2" fill="none" />
+          <circle cx="12" cy="12" r="2.4" fill="currentColor" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+/** Smaller chapter mark under the part badge. */
+export function ChapterMarkIcon({
+  worldId,
+  index = 0,
+  completed = false,
+  size = 18
+}: {
+  worldId: GameWorldId;
+  index?: number;
+  completed?: boolean;
+  size?: number;
+}) {
+  const tone = completed ? "is-done" : "is-todo";
   const variant = index % 3;
+
+  if (worldId === "stardew") {
+    return (
+      <svg
+        className={`chapter-mark chapter-mark--stardew ${tone}`}
+        width={size}
+        height={size}
+        viewBox="0 0 16 16"
+        aria-hidden="true"
+      >
+        <rect x="0.75" y="0.75" width="14.5" height="14.5" rx="2" fill="currentColor" opacity="0.1" />
+        {variant === 0 && (
+          <>
+            <path d="M8 2.8c2 1.5 2.9 3.2 2.9 5.1S9.6 13 8 13 5.1 10 5.1 7.9 6 4.3 8 2.8Z" fill="currentColor" />
+            <path d="M8 6v5.2" stroke="#fff8e8" strokeWidth="1.2" strokeLinecap="round" />
+          </>
+        )}
+        {variant === 1 && (
+          <path d="M8 2.6 9.3 6.2h3.7L10.2 8.5l1.1 3.5L8 10.2 4.7 12l1.1-3.5L3 6.2h3.7L8 2.6Z" fill="currentColor" />
+        )}
+        {variant === 2 && (
+          <>
+            <rect x="7.2" y="2.8" width="1.6" height="8.2" rx="0.5" fill="currentColor" />
+            <path d="M4.2 7h7.6L10.4 10H5.6L4.2 7Z" fill="currentColor" />
+            <circle cx="8" cy="12.2" r="1.1" fill="currentColor" />
+          </>
+        )}
+      </svg>
+    );
+  }
+
+  if (worldId === "celeste") {
+    return (
+      <svg
+        className={`chapter-mark chapter-mark--celeste ${tone}`}
+        width={size}
+        height={size}
+        viewBox="0 0 16 16"
+        aria-hidden="true"
+      >
+        <rect x="0.75" y="0.75" width="14.5" height="14.5" rx="2" fill="currentColor" opacity="0.1" />
+        {variant === 0 && <path d="M8 2.4 12.6 8 8 13.6 3.4 8 8 2.4Z" fill="currentColor" />}
+        {variant === 1 && (
+          <path
+            d="M8 13.1c-2.9-1.8-4.5-3.6-4.5-5.5A2.8 2.8 0 0 1 8 5.1a2.8 2.8 0 0 1 4.5 2.5c0 1.9-1.6 3.7-4.5 5.5Z"
+            fill="currentColor"
+          />
+        )}
+        {variant === 2 && (
+          <>
+            <path d="M8 2.8 9.6 6.2l3.8.4-2.8 2.5.8 3.5L8 10.8 4.6 12.6l.8-3.5-2.8-2.5 3.8-.4L8 2.8Z" fill="currentColor" />
+            <circle cx="8" cy="8" r="1.3" fill="#fff8f4" opacity="0.9" />
+          </>
+        )}
+      </svg>
+    );
+  }
+
   return (
     <svg
       className={`chapter-mark chapter-mark--hollow ${tone}`}
       width={size}
       height={size}
       viewBox="0 0 16 16"
-      fill="none"
       aria-hidden="true"
     >
-      <circle cx="8" cy="8" r="7" fill="currentColor" opacity="0.12" />
+      <rect x="0.75" y="0.75" width="14.5" height="14.5" rx="2" fill="currentColor" opacity="0.1" />
       {variant === 0 && (
         <>
-          <path d="M5.2 4.2h5.6v5.2c0 1.9-1.2 3.4-2.8 3.4S5.2 11.3 5.2 9.4V4.2Z" fill="currentColor" />
-          <circle cx="6.7" cy="7.4" r="0.9" fill="#0b0d12" />
-          <circle cx="9.3" cy="7.4" r="0.9" fill="#0b0d12" />
+          <path d="M5.1 3.8h5.8v5.4c0 2-1.2 3.5-2.9 3.5S5.1 11.2 5.1 9.2V3.8Z" fill="currentColor" />
+          <circle cx="6.7" cy="7.2" r="0.85" fill="#0b0d12" />
+          <circle cx="9.3" cy="7.2" r="0.85" fill="#0b0d12" />
         </>
       )}
       {variant === 1 && (
-        <path
-          d="M8 2.8c2.8 0 4.8 1.5 4.8 3.8S10.4 11 8 13.2C5.6 11 3.2 8.9 3.2 6.6S5.2 2.8 8 2.8Z"
-          fill="currentColor"
-        />
+        <path d="M8 2.6c2.9 0 5 1.6 5 4S10.6 11 8 13.2C5.4 11 3 8.9 3 6.6s2.1-4 5-4Z" fill="currentColor" />
       )}
       {variant === 2 && (
         <>
-          <circle cx="8" cy="8" r="4.4" stroke="currentColor" strokeWidth="1.6" />
-          <circle cx="8" cy="8" r="1.6" fill="currentColor" />
+          <circle cx="8" cy="8" r="4.3" stroke="currentColor" strokeWidth="1.5" fill="none" />
+          <circle cx="8" cy="8" r="1.5" fill="currentColor" />
         </>
       )}
     </svg>
