@@ -1,0 +1,16 @@
+Official Steam client icons (downloaded from steamcommunity CDN).
+
+Stardew Valley — AppID 413150
+  icon: 35d1377200084a4034238c05b0c8930451e2fb40
+  clienticon: 913064b27b4b25e2c03cbd261a8b03fd67da693c
+
+Celeste — AppID 504230
+  icon: 04cb7aa0b497a3962e6b1655b7fd81a2cc95d18b
+  clienticon: fbcf1fbb408b277b7fa0e601a3b87d82b6b2a531
+
+Hollow Knight — AppID 367520
+  icon: f6ab055c2366237200b1a31cccbd6cf81e436d72
+  clienticon: 29492c0a65a3d03943a8f4ab786c93a95a150a56
+
+Artwork © ConcernedApe / Extremely OK Games / Team Cherry.
+Used for non-commercial fan theming in this personal learning blog.
