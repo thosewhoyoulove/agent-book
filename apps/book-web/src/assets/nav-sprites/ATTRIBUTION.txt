@@ -1,0 +1,18 @@
+Sidebar navigation sprites for agent-book fan UI (non-commercial).
+
+Stardew Valley (ConcernedApe)
+  Source: stardewvalleywiki.com Special:FilePath item sprites
+  Files: hoe, sprinkler, keg, parsnip, chest, fish, stardrop, watering-can, wood, bar
+
+Celeste (Extremely OK Games / Maddy Makes Games)
+  strawberry*.png — Steam client icon (AppID 504230), same lineage as world-icons/
+  crystal-heart.png, mountain.png, cassette.png — fan pixel recreations matching
+  in-game icon silhouettes (wiki CDN blocked in this environment; swap for
+  official atlas dumps when available)
+
+Hollow Knight (Team Cherry)
+  mask*.png — Steam client icon (AppID 367520), same lineage as world-icons/
+  geo.png, soul.png, nail.png — fan pixel recreations matching in-game icon
+  silhouettes (same note as Celeste)
+
+All trademarks and original artwork belong to their respective owners.

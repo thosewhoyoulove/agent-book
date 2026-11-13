@@ -889,9 +889,15 @@ kbd {
 .part-mark,
 .chapter-mark {
   display: block;
-  color: var(--accent);
   flex: 0 0 auto;
-  overflow: visible;
+  object-fit: contain;
+  background: transparent;
+  vertical-align: middle;
+}
+.part-mark.is-pixel,
+.chapter-mark.is-pixel {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 .nav-tree__part-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .nav-tree__part b {
@@ -986,11 +992,10 @@ kbd {
   padding-left: 4px;
 }
 .nav-tree__chapter-toggle:disabled .nav-tree__chapter-lead { opacity: 0.42; }
-.chapter-mark { display: block; color: var(--accent); }
-.chapter-mark.is-todo { opacity: 0.82; }
+.chapter-mark.is-todo { opacity: 0.78; }
 .chapter-mark.is-done {
-  color: var(--success, var(--accent));
-  filter: drop-shadow(2px 2px 0 color-mix(in srgb, currentColor 40%, transparent));
+  opacity: 1;
+  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.35));
 }
 .nav-tree__chapter-link {
   min-width: 0;
