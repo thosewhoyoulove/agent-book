@@ -8,27 +8,42 @@ import stardewStardrop from "../assets/nav-sprites/stardew/stardrop.png";
 import stardewChest from "../assets/nav-sprites/stardew/chest.png";
 import stardewFish from "../assets/nav-sprites/stardew/fish.png";
 import stardewCan from "../assets/nav-sprites/stardew/watering-can.png";
+import stardewWood from "../assets/nav-sprites/stardew/wood.png";
+import stardewBar from "../assets/nav-sprites/stardew/bar.png";
 
 import celesteStrawberry from "../assets/nav-sprites/celeste/strawberry.png";
 import celesteCrystal from "../assets/nav-sprites/celeste/crystal-heart.png";
 import celesteMountain from "../assets/nav-sprites/celeste/mountain.png";
-import celesteCassette from "../assets/nav-sprites/celeste/cassette.png";
+import celesteFeather from "../assets/nav-sprites/celeste/feather.png";
+import celesteStrawberries from "../assets/nav-sprites/celeste/strawberries.png";
+import celesteGolden from "../assets/nav-sprites/celeste/golden-berry.png";
+import celesteForsaken from "../assets/nav-sprites/celeste/forsaken.png";
 
 import hollowMask from "../assets/nav-sprites/hollow/mask.png";
 import hollowSoul from "../assets/nav-sprites/hollow/soul.png";
 import hollowGeo from "../assets/nav-sprites/hollow/geo.png";
 import hollowNail from "../assets/nav-sprites/hollow/nail.png";
+import hollowEnchanted from "../assets/nav-sprites/hollow/enchanted.png";
+import hollowMasks from "../assets/nav-sprites/hollow/masks.png";
+import hollowWorldsoul from "../assets/nav-sprites/hollow/worldsoul.png";
 
 const partSprites: Record<GameWorldId, string[]> = {
   stardew: [stardewHoe, stardewSprinkler, stardewKeg],
-  celeste: [celesteCrystal, celesteStrawberry, celesteMountain],
+  celeste: [celesteForsaken, celesteCrystal, celesteMountain],
   hollow: [hollowMask, hollowSoul, hollowGeo]
 };
 
 const chapterSprites: Record<GameWorldId, string[]> = {
-  stardew: [stardewParsnip, stardewStardrop, stardewChest, stardewFish, stardewCan],
-  celeste: [celesteStrawberry, celesteCrystal, celesteMountain, celesteCassette],
-  hollow: [hollowMask, hollowSoul, hollowGeo, hollowNail]
+  stardew: [stardewParsnip, stardewStardrop, stardewChest, stardewFish, stardewCan, stardewWood, stardewBar],
+  celeste: [
+    celesteStrawberry,
+    celesteCrystal,
+    celesteMountain,
+    celesteFeather,
+    celesteStrawberries,
+    celesteGolden
+  ],
+  hollow: [hollowMask, hollowSoul, hollowGeo, hollowNail, hollowEnchanted, hollowMasks, hollowWorldsoul]
 };
 
 function NavSprite({

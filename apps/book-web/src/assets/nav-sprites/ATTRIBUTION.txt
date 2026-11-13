@@ -5,14 +5,28 @@ Stardew Valley (ConcernedApe)
   Files: hoe, sprinkler, keg, parsnip, chest, fish, stardrop, watering-can, wood, bar
 
 Celeste (Extremely OK Games / Maddy Makes Games)
-  strawberry*.png — Steam client icon (AppID 504230), same lineage as world-icons/
-  crystal-heart.png, mountain.png, cassette.png — fan pixel recreations matching
-  in-game icon silhouettes (wiki CDN blocked in this environment; swap for
-  official atlas dumps when available)
+  Source: Steam Store achievement icons (AppID 504230)
+    shared.akamai.steamstatic.com/community_assets/images/apps/504230/
+  Mapping:
+    mountain.png       ← achievement "Celeste"
+    crystal-heart.png  ← achievement "Reflection"
+    strawberry.png     ← achievement "Strawberry Badge"
+    strawberries.png   ← achievement "Strawberry Medal"
+    feather.png        ← achievement "Breathe"
+    golden-berry.png   ← achievement "Impress Your Friends"
+    forsaken.png       ← achievement "Forsaken"
 
 Hollow Knight (Team Cherry)
-  mask*.png — Steam client icon (AppID 367520), same lineage as world-icons/
-  geo.png, soul.png, nail.png — fan pixel recreations matching in-game icon
-  silhouettes (same note as Celeste)
+  Source: Steam Store achievement icons (AppID 367520)
+    shared.akamai.steamstatic.com/community_assets/images/apps/367520/
+  Mapping:
+    mask.png       ← achievement "Protected"
+    soul.png       ← achievement "Soulful"
+    geo.png        ← achievement "Charmed"
+    nail.png       ← achievement "Test of Resolve"
+    enchanted.png  ← achievement "Enchanted"
+    masks.png      ← achievement "Masked"
+    worldsoul.png  ← achievement "Worldsoul"
 
 All trademarks and original artwork belong to their respective owners.
+Used for non-commercial fan theming in this personal learning blog.
