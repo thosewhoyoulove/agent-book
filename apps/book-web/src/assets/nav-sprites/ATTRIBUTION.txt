@@ -4,7 +4,7 @@ Stardew Valley (ConcernedApe)
   Source: stardewvalleywiki.com Special:FilePath item sprites
   Part badges (precious, first-level only): stardrop-tea, prismatic-shard, magic-rock-candy
   stardrop.png is the right-side loot mark only and is not reused on the left
-  Chapter marks: pearl, dinosaur-egg, ancient-doll, chest, fish
+  Chapter marks (one each, no repeats): parsnip, chest, fish, watering-can, hoe, keg, dinosaur-egg
   collectible.png  ← Stardrop — right-side chapter loot mark
 
 Celeste (Extremely OK Games / Maddy Makes Games)
@@ -13,8 +13,8 @@ Celeste (Extremely OK Games / Maddy Makes Games)
     golden-berry.png   ← "Impress Your Friends" (golden strawberry)
     crystal-heart.png  ← "Reflection"
     feather.png        ← "Breathe"
-  Chapter / other:
-    mountain.png, strawberry.png, strawberries.png, forsaken.png
+  Chapter marks (one each, no repeats), Steam achievement icons:
+    gateway, machines, mirror-magic, one-up, archaeology, skyline, wow
     collectible.png    ← Steam client strawberry — loot mark
 
 Hollow Knight (Team Cherry)
@@ -23,8 +23,8 @@ Hollow Knight (Team Cherry)
     kings-brand.png    ← ornate seal achievement art
     hunters-mark.png   ← hunter mask achievement art
     royal-scepter.png  ← orb/scepter achievement art
-  Chapter / other:
-    mask, soul, geo, nail, enchanted, masks, worldsoul, void-knight
+  Chapter marks (one each, no repeats), Steam achievement icons:
+    cartographer, grubfriend, passing-age, falsehood, ritual, grand-performance, happy-couple
     collectible.png ← Steam client icon — loot mark
 
 All trademarks and original artwork belong to their respective owners.

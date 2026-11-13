@@ -7,23 +7,31 @@ import stardewParsnip from "../assets/nav-sprites/stardew/parsnip.png";
 import stardewChest from "../assets/nav-sprites/stardew/chest.png";
 import stardewFish from "../assets/nav-sprites/stardew/fish.png";
 import stardewCan from "../assets/nav-sprites/stardew/watering-can.png";
-import stardewWood from "../assets/nav-sprites/stardew/wood.png";
+import stardewHoe from "../assets/nav-sprites/stardew/hoe.png";
+import stardewKeg from "../assets/nav-sprites/stardew/keg.png";
+import stardewDinoEgg from "../assets/nav-sprites/stardew/dinosaur-egg.png";
 
 import celesteCrystal from "../assets/nav-sprites/celeste/crystal-heart.png";
 import celesteFeather from "../assets/nav-sprites/celeste/feather.png";
 import celesteGolden from "../assets/nav-sprites/celeste/golden-berry.png";
-import celesteStrawberry from "../assets/nav-sprites/celeste/strawberry.png";
-import celesteMountain from "../assets/nav-sprites/celeste/mountain.png";
-import celesteStrawberries from "../assets/nav-sprites/celeste/strawberries.png";
-import celesteForsaken from "../assets/nav-sprites/celeste/forsaken.png";
+import celesteGateway from "../assets/nav-sprites/celeste/gateway.png";
+import celesteMachines from "../assets/nav-sprites/celeste/machines.png";
+import celesteMirror from "../assets/nav-sprites/celeste/mirror-magic.png";
+import celesteOneUp from "../assets/nav-sprites/celeste/one-up.png";
+import celesteArchaeology from "../assets/nav-sprites/celeste/archaeology.png";
+import celesteSkyline from "../assets/nav-sprites/celeste/skyline.png";
+import celesteWow from "../assets/nav-sprites/celeste/wow.png";
 
 import hollowKingsBrand from "../assets/nav-sprites/hollow/kings-brand.png";
 import hollowHuntersMark from "../assets/nav-sprites/hollow/hunters-mark.png";
 import hollowRoyalScepter from "../assets/nav-sprites/hollow/royal-scepter.png";
-import hollowMask from "../assets/nav-sprites/hollow/mask.png";
-import hollowSoul from "../assets/nav-sprites/hollow/soul.png";
-import hollowGeo from "../assets/nav-sprites/hollow/geo.png";
-import hollowNail from "../assets/nav-sprites/hollow/nail.png";
+import hollowCartographer from "../assets/nav-sprites/hollow/cartographer.png";
+import hollowGrubfriend from "../assets/nav-sprites/hollow/grubfriend.png";
+import hollowPassingAge from "../assets/nav-sprites/hollow/passing-age.png";
+import hollowFalsehood from "../assets/nav-sprites/hollow/falsehood.png";
+import hollowRitual from "../assets/nav-sprites/hollow/ritual.png";
+import hollowPerformance from "../assets/nav-sprites/hollow/grand-performance.png";
+import hollowCouple from "../assets/nav-sprites/hollow/happy-couple.png";
 
 /** First-level volume badges only. Stardrop stays on the right-side loot mark. */
 const partSprites: Record<GameWorldId, string[]> = {
@@ -32,11 +40,27 @@ const partSprites: Record<GameWorldId, string[]> = {
   hollow: [hollowKingsBrand, hollowHuntersMark, hollowRoyalScepter]
 };
 
-/** Chapter rows keep everyday marks and do not repeat the volume relics. */
+/** One distinct sprite per chapter row. Seven chapters, no cycling. */
 const chapterSprites: Record<GameWorldId, string[]> = {
-  stardew: [stardewParsnip, stardewChest, stardewFish, stardewCan, stardewWood],
-  celeste: [celesteStrawberry, celesteMountain, celesteStrawberries, celesteForsaken],
-  hollow: [hollowMask, hollowSoul, hollowGeo, hollowNail]
+  stardew: [stardewParsnip, stardewChest, stardewFish, stardewCan, stardewHoe, stardewKeg, stardewDinoEgg],
+  celeste: [
+    celesteGateway,
+    celesteMachines,
+    celesteMirror,
+    celesteOneUp,
+    celesteArchaeology,
+    celesteSkyline,
+    celesteWow
+  ],
+  hollow: [
+    hollowCartographer,
+    hollowGrubfriend,
+    hollowPassingAge,
+    hollowFalsehood,
+    hollowRitual,
+    hollowPerformance,
+    hollowCouple
+  ]
 };
 
 function NavSprite({
