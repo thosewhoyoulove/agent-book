@@ -1,15 +1,13 @@
 import type { GameWorldId } from "../content/gameWorlds";
 
-import stardewHoe from "../assets/nav-sprites/stardew/hoe.png";
-import stardewSprinkler from "../assets/nav-sprites/stardew/sprinkler.png";
-import stardewKeg from "../assets/nav-sprites/stardew/keg.png";
-import stardewParsnip from "../assets/nav-sprites/stardew/parsnip.png";
 import stardewStardrop from "../assets/nav-sprites/stardew/stardrop.png";
+import stardewPrismatic from "../assets/nav-sprites/stardew/prismatic-shard.png";
+import stardewCandy from "../assets/nav-sprites/stardew/magic-rock-candy.png";
+import stardewPearl from "../assets/nav-sprites/stardew/pearl.png";
+import stardewDinoEgg from "../assets/nav-sprites/stardew/dinosaur-egg.png";
+import stardewAncientDoll from "../assets/nav-sprites/stardew/ancient-doll.png";
 import stardewChest from "../assets/nav-sprites/stardew/chest.png";
 import stardewFish from "../assets/nav-sprites/stardew/fish.png";
-import stardewCan from "../assets/nav-sprites/stardew/watering-can.png";
-import stardewWood from "../assets/nav-sprites/stardew/wood.png";
-import stardewBar from "../assets/nav-sprites/stardew/bar.png";
 
 import celesteStrawberry from "../assets/nav-sprites/celeste/strawberry.png";
 import celesteCrystal from "../assets/nav-sprites/celeste/crystal-heart.png";
@@ -17,7 +15,6 @@ import celesteMountain from "../assets/nav-sprites/celeste/mountain.png";
 import celesteFeather from "../assets/nav-sprites/celeste/feather.png";
 import celesteStrawberries from "../assets/nav-sprites/celeste/strawberries.png";
 import celesteGolden from "../assets/nav-sprites/celeste/golden-berry.png";
-import celesteForsaken from "../assets/nav-sprites/celeste/forsaken.png";
 
 import hollowMask from "../assets/nav-sprites/hollow/mask.png";
 import hollowSoul from "../assets/nav-sprites/hollow/soul.png";
@@ -26,15 +23,19 @@ import hollowNail from "../assets/nav-sprites/hollow/nail.png";
 import hollowEnchanted from "../assets/nav-sprites/hollow/enchanted.png";
 import hollowMasks from "../assets/nav-sprites/hollow/masks.png";
 import hollowWorldsoul from "../assets/nav-sprites/hollow/worldsoul.png";
+import hollowKingsBrand from "../assets/nav-sprites/hollow/kings-brand.png";
+import hollowHuntersMark from "../assets/nav-sprites/hollow/hunters-mark.png";
+import hollowRoyalScepter from "../assets/nav-sprites/hollow/royal-scepter.png";
 
+/** Part / volume badges — rare / precious themed relics. */
 const partSprites: Record<GameWorldId, string[]> = {
-  stardew: [stardewHoe, stardewSprinkler, stardewKeg],
-  celeste: [celesteForsaken, celesteCrystal, celesteMountain],
-  hollow: [hollowMask, hollowSoul, hollowGeo]
+  stardew: [stardewStardrop, stardewPrismatic, stardewCandy],
+  celeste: [celesteGolden, celesteCrystal, celesteFeather],
+  hollow: [hollowKingsBrand, hollowHuntersMark, hollowRoyalScepter]
 };
 
 const chapterSprites: Record<GameWorldId, string[]> = {
-  stardew: [stardewParsnip, stardewStardrop, stardewChest, stardewFish, stardewCan, stardewWood, stardewBar],
+  stardew: [stardewPearl, stardewDinoEgg, stardewAncientDoll, stardewChest, stardewFish, stardewStardrop],
   celeste: [
     celesteStrawberry,
     celesteCrystal,

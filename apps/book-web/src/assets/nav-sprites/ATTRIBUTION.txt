@@ -2,34 +2,29 @@ Sidebar navigation sprites for agent-book fan UI (non-commercial).
 
 Stardew Valley (ConcernedApe)
   Source: stardewvalleywiki.com Special:FilePath item sprites
-  Files: hoe, sprinkler, keg, parsnip, chest, fish, stardrop, watering-can, wood, bar
-  collectible.png  ← Stardrop (wiki) — right-side chapter loot mark
+  Part badges (precious): stardrop, prismatic-shard, magic-rock-candy
+  Chapter marks: pearl, dinosaur-egg, ancient-doll, chest, fish
+  collectible.png  ← Stardrop — right-side chapter loot mark
 
 Celeste (Extremely OK Games / Maddy Makes Games)
   Source: Steam Store achievement icons (AppID 504230)
-    shared.akamai.steamstatic.com/community_assets/images/apps/504230/
-  Mapping:
-    mountain.png       ← achievement "Celeste"
-    crystal-heart.png  ← achievement "Reflection"
-    strawberry.png     ← achievement "Strawberry Badge"
-    strawberries.png   ← achievement "Strawberry Medal"
-    feather.png        ← achievement "Breathe"
-    golden-berry.png   ← achievement "Impress Your Friends"
-    forsaken.png       ← achievement "Forsaken"
-    collectible.png    ← Strawberry Badge — right-side chapter loot mark
+  Part badges (precious):
+    golden-berry.png   ← "Impress Your Friends" (golden strawberry)
+    crystal-heart.png  ← "Reflection"
+    feather.png        ← "Breathe"
+  Chapter / other:
+    mountain.png, strawberry.png, strawberries.png, forsaken.png
+    collectible.png    ← Steam client strawberry — loot mark
 
 Hollow Knight (Team Cherry)
-  Source: Steam Store achievement icons (AppID 367520) + Steam client icon
-    shared.akamai.steamstatic.com/community_assets/images/apps/367520/
-  Mapping:
-    mask.png       ← achievement "Protected"
-    soul.png       ← achievement "Soulful"
-    geo.png        ← achievement "Charmed"
-    nail.png       ← achievement "Test of Resolve"
-    enchanted.png  ← achievement "Enchanted"
-    masks.png      ← achievement "Masked"
-    worldsoul.png  ← achievement "Worldsoul"
-    collectible.png ← Steam client icon (world-icons/hollow.png) — loot mark
+  Source: Steam Store / Steam Community achievement icons (AppID 367520)
+  Part badges (precious):
+    kings-brand.png    ← ornate seal achievement art
+    hunters-mark.png   ← hunter mask achievement art
+    royal-scepter.png  ← orb/scepter achievement art
+  Chapter / other:
+    mask, soul, geo, nail, enchanted, masks, worldsoul, void-knight
+    collectible.png ← Steam client icon — loot mark
 
 All trademarks and original artwork belong to their respective owners.
 Used for non-commercial fan theming in this personal learning blog.
