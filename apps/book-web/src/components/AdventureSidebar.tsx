@@ -41,7 +41,7 @@ export interface AdventureSidebarProps {
   expandedChapters: string[];
   activeChapterId: AvailableChapterId;
   activeSection: string;
-  activeChapterOutline: Array<{ id: string; title: string }>;
+  getChapterOutline: (chapterId: AvailableChapterId) => Array<{ id: string; title: string }>;
   progressMap: Record<AvailableChapterId, number>;
   availableChapterCount: number;
   currentChapterProgress: number;
@@ -49,7 +49,7 @@ export interface AdventureSidebarProps {
   onSelectWorld: (id: GameWorldId) => void;
   onToggleGroup: (groupId: string) => void;
   onToggleChapter: (chapterId: string) => void;
-  onNavigateChapter: (chapterId: AvailableChapterId) => void;
+  onNavigateChapter: (chapterId: AvailableChapterId, targetSectionId?: string) => void;
   onNavigateSection: (sectionId: string) => void;
   onNavigateHome: () => void;
 }
@@ -107,7 +107,7 @@ export function AdventureSidebar({
   expandedChapters,
   activeChapterId,
   activeSection,
-  activeChapterOutline,
+  getChapterOutline,
   progressMap,
   availableChapterCount,
   currentChapterProgress,
@@ -217,6 +217,7 @@ export function AdventureSidebar({
                     chapter.status === "available" && chapterContentIds.has(chapter.id);
                   const chapterExpanded = expandedChapters.includes(chapter.id) && chapterAvailable;
                   const isCompleted = chapterAvailable && (progressMap[chapterId] ?? 0) >= 100;
+                  const chapterOutline = chapterAvailable ? getChapterOutline(chapterId) : [];
 
                   return (
                     <div
@@ -288,31 +289,38 @@ export function AdventureSidebar({
                         )}
                       </div>
 
-                      {chapterAvailable && chapterIsActive && (
+                      {chapterAvailable && (
                         <div className={`nav-tree__children${chapterExpanded ? " is-expanded" : ""}`}>
-                          {activeChapterOutline.map((item, index) => (
-                            <a
-                              data-nav-section={item.id}
-                              className={`nav-tree__child${activeSection === item.id ? " is-active" : ""}`}
-                              href={`#${item.id}`}
-                              onClick={(event) => {
-                                event.preventDefault();
-                                onNavigateSection(item.id);
-                              }}
-                              aria-current={activeSection === item.id ? "location" : undefined}
-                              key={item.id}
-                            >
-                              <span className="nav-tree__child-label">
-                                {activeSection === item.id ? (
-                                  <SectionArrowIcon worldId={worldId} />
-                                ) : (
-                                  <span className="nav-tree__child-dot" aria-hidden="true" />
-                                )}
-                                <span>{item.title}</span>
-                              </span>
-                              <small>{String(index + 1).padStart(2, "0")}</small>
-                            </a>
-                          ))}
+                          {chapterOutline.map((item, index) => {
+                            const sectionIsActive = chapterIsActive && activeSection === item.id;
+                            return (
+                              <a
+                                data-nav-section={item.id}
+                                className={`nav-tree__child${sectionIsActive ? " is-active" : ""}`}
+                                href={`#${item.id}`}
+                                onClick={(event) => {
+                                  event.preventDefault();
+                                  if (chapterIsActive) {
+                                    onNavigateSection(item.id);
+                                  } else {
+                                    onNavigateChapter(chapterId, item.id);
+                                  }
+                                }}
+                                aria-current={sectionIsActive ? "location" : undefined}
+                                key={item.id}
+                              >
+                                <span className="nav-tree__child-label">
+                                  {sectionIsActive ? (
+                                    <SectionArrowIcon worldId={worldId} />
+                                  ) : (
+                                    <span className="nav-tree__child-dot" aria-hidden="true" />
+                                  )}
+                                  <span>{item.title}</span>
+                                </span>
+                                <small>{String(index + 1).padStart(2, "0")}</small>
+                              </a>
+                            );
+                          })}
                         </div>
                       )}
                     </div>

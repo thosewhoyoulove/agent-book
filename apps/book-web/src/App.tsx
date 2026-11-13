@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { chapters } from "@agent-book/shared";
 import { worldBgm } from "./audio/worldBgm";
-import { worldSfx } from "./audio/worldSfx";
 import { AgentLoopSimulator } from "./components/AgentLoopSimulator";
 import { CodeBlock } from "./components/CodeBlock";
 import { CollectibleSprite, HeroWorldScene, WorldEmblemIcon } from "./components/GameWorldArt";
 import { AdventureSidebar } from "./components/AdventureSidebar";
-import { BgmToggleIcon, SfxToggleIcon } from "./components/NavIcons";
+import { BgmToggleIcon } from "./components/NavIcons";
 import { chapterContent, chapterEditorialMeta } from "./content/chapters";
 import { minimalLoopCode, productionLoopCode } from "./content/chapter5";
 import {
@@ -387,7 +386,6 @@ function HomePage({
 export function App() {
   const [worldId, setWorldId] = useState<GameWorldId>(getInitialWorldId);
   const [dark, setDark] = useState(getInitialTheme);
-  const [sfxEnabled, setSfxEnabled] = useState(() => worldSfx.isEnabled());
   const [bgmEnabled, setBgmEnabled] = useState(() => worldBgm.isEnabled());
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [mobileOutlineOpen, setMobileOutlineOpen] = useState(false);
@@ -446,7 +444,6 @@ export function App() {
   const selectWorld = useCallback(
     (id: GameWorldId, toast = true) => {
       setWorldId(id);
-      worldSfx.play("switch", id);
       worldBgm.unlock();
       worldBgm.play(id);
       if (toast) {
@@ -458,10 +455,8 @@ export function App() {
   );
 
   useEffect(() => {
-    const unsubscribeSfx = worldSfx.subscribe(setSfxEnabled);
     const unsubscribeBgm = worldBgm.subscribe(setBgmEnabled);
     return () => {
-      unsubscribeSfx();
       unsubscribeBgm();
     };
   }, []);
@@ -503,14 +498,6 @@ export function App() {
         if (updated >= 100 && previous < 100) {
           const quest = gameWorlds[worldId].chapters[chapterId];
           showLootToast(`解锁成就物【${quest.itemName}】· ${quest.rewardText}`);
-          const completedCount =
-            availableChapterOrder.filter((id) => (id === chapterId ? updated : prev[id] ?? 0) >= 100)
-              .length;
-          if (completedCount >= availableChapterOrder.length) {
-            worldSfx.play("surprise", worldId);
-          } else {
-            worldSfx.play("collect", worldId);
-          }
         }
         return { ...prev, [chapterId]: updated };
       });
@@ -747,6 +734,9 @@ export function App() {
     setMobileOutlineOpen(false);
     setSearchOpen(false);
     setIsHome(false);
+    setExpandedChapters((chapterIds) =>
+      chapterIds.includes(chapterId) ? chapterIds : [...chapterIds, chapterId]
+    );
 
     if (chapterId !== activeChapterId) {
       window.history.pushState(null, "", `#${chapterId}`);
@@ -778,14 +768,12 @@ export function App() {
   }, [updateChapterProgress]);
 
   const toggleGroup = (groupId: string) => {
-    worldSfx.play("expand", worldId);
     setExpandedGroups((groups) =>
       groups.includes(groupId) ? groups.filter((id) => id !== groupId) : [...groups, groupId]
     );
   };
 
   const toggleChapter = (chapterId: string) => {
-    worldSfx.play("expand", worldId);
     setExpandedChapters((chapterIds) =>
       chapterIds.includes(chapterId)
         ? chapterIds.filter((id) => id !== chapterId)
@@ -879,18 +867,6 @@ export function App() {
           </div>
 
           <button
-            className="sfx-toggle"
-            type="button"
-            onClick={() => worldSfx.toggle()}
-            aria-pressed={sfxEnabled}
-            aria-label={sfxEnabled ? "关闭冒险音效" : "开启冒险音效"}
-            title={sfxEnabled ? "音效开 · 点击静音" : "音效关 · 点击开启"}
-          >
-            <SfxToggleIcon enabled={sfxEnabled} />
-            <span>{sfxEnabled ? "音效开" : "音效关"}</span>
-          </button>
-
-          <button
             className={`bgm-toggle${worldBgm.hasAnyTrack() ? "" : " is-empty"}`}
             type="button"
             onClick={() => {
@@ -944,7 +920,6 @@ export function App() {
             className="theme-toggle"
             type="button"
             onClick={() => {
-              worldSfx.play("theme", worldId);
               setDark((value) => !value);
             }}
             aria-label={dark ? `切换为${world.lightModeLabel}` : `切换为${world.darkModeLabel}`}
@@ -1157,7 +1132,7 @@ export function App() {
             expandedChapters={expandedChapters}
             activeChapterId={activeChapterId}
             activeSection={activeSection}
-            activeChapterOutline={activeChapterOutline}
+            getChapterOutline={getChapterOutline}
             progressMap={progressMap}
             availableChapterCount={availableChapterOrder.length}
             currentChapterProgress={currentChapterProgress}
