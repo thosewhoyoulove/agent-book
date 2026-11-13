@@ -4,6 +4,9 @@ import type { GameWorldId } from "../content/gameWorlds";
  * Sidebar visual system tokens.
  * Runtime values live as CSS custom properties on :root[data-world],
  * so shared markup can stay theme-agnostic.
+ *
+ * Pixel UI contract: hard edges (0 radius), offset shadows (no blur),
+ * theme distinction via color / texture / clip-path — not soft glow SaaS chrome.
  */
 export type SidebarThemeTokens = {
   colors: {
@@ -51,13 +54,13 @@ export const sidebarThemeTokens: Record<GameWorldId, SidebarThemeTokens> = {
       letterSpacing: "0.04em"
     },
     radius: {
-      card: "2px",
+      card: "0px",
       item: "0px"
     },
     effects: {
       shadow: "hard pixel offset",
       glow: "none",
-      texture: "soft plank + pixel grid"
+      texture: "plank grain + pixel grid"
     }
   },
   celeste: {
@@ -77,13 +80,13 @@ export const sidebarThemeTokens: Record<GameWorldId, SidebarThemeTokens> = {
       letterSpacing: "0.08em"
     },
     radius: {
-      card: "10px",
-      item: "8px"
+      card: "0px",
+      item: "0px"
     },
     effects: {
-      shadow: "soft altitude lift",
-      glow: "pink / cyan rim",
-      texture: "stars + distant ridge"
+      shadow: "hard cyan/pink offset",
+      glow: "none",
+      texture: "stars + ridge silhouette"
     }
   },
   hollow: {
@@ -107,9 +110,9 @@ export const sidebarThemeTokens: Record<GameWorldId, SidebarThemeTokens> = {
       item: "0px"
     },
     effects: {
-      shadow: "deep sink",
-      glow: "soul cyan halo",
-      texture: "mist + faint ruin lines"
+      shadow: "deep hard sink",
+      glow: "none",
+      texture: "mist grid + ruin lines"
     }
   }
 };
