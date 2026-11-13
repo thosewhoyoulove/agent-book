@@ -1,0 +1,10 @@
+World art assets for agent-book fan UI (non-commercial).
+
+Hero / cover:
+- Steam CDN library_hero.jpg + library_600x900.jpg for Stardew Valley (413150), Celeste (504230), Hollow Knight (367520)
+
+Collectibles:
+- Stardew Valley Stardrop sprite via stardewvalleywiki.com
+- Celeste strawberry / Hollow Knight mask from Steam client icons (see world-icons/ATTRIBUTION.txt)
+
+All trademarks and artwork belong to ConcernedApe, Extremely OK Games / Maddy Makes Games, and Team Cherry.
