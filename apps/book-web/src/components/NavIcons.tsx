@@ -1,29 +1,42 @@
 import type { GameWorldId } from "../content/gameWorlds";
 
-import stardewStardrop from "../assets/nav-sprites/stardew/stardrop.png";
+import stardewTea from "../assets/nav-sprites/stardew/stardrop-tea.png";
 import stardewPrismatic from "../assets/nav-sprites/stardew/prismatic-shard.png";
 import stardewCandy from "../assets/nav-sprites/stardew/magic-rock-candy.png";
+import stardewParsnip from "../assets/nav-sprites/stardew/parsnip.png";
+import stardewChest from "../assets/nav-sprites/stardew/chest.png";
+import stardewFish from "../assets/nav-sprites/stardew/fish.png";
+import stardewCan from "../assets/nav-sprites/stardew/watering-can.png";
+import stardewWood from "../assets/nav-sprites/stardew/wood.png";
 
 import celesteCrystal from "../assets/nav-sprites/celeste/crystal-heart.png";
 import celesteFeather from "../assets/nav-sprites/celeste/feather.png";
 import celesteGolden from "../assets/nav-sprites/celeste/golden-berry.png";
+import celesteStrawberry from "../assets/nav-sprites/celeste/strawberry.png";
+import celesteMountain from "../assets/nav-sprites/celeste/mountain.png";
+import celesteStrawberries from "../assets/nav-sprites/celeste/strawberries.png";
+import celesteForsaken from "../assets/nav-sprites/celeste/forsaken.png";
 
 import hollowKingsBrand from "../assets/nav-sprites/hollow/kings-brand.png";
 import hollowHuntersMark from "../assets/nav-sprites/hollow/hunters-mark.png";
 import hollowRoyalScepter from "../assets/nav-sprites/hollow/royal-scepter.png";
+import hollowMask from "../assets/nav-sprites/hollow/mask.png";
+import hollowSoul from "../assets/nav-sprites/hollow/soul.png";
+import hollowGeo from "../assets/nav-sprites/hollow/geo.png";
+import hollowNail from "../assets/nav-sprites/hollow/nail.png";
 
-/** Part / volume badges — rare / precious themed relics. */
+/** First-level volume badges only. Stardrop stays on the right-side loot mark. */
 const partSprites: Record<GameWorldId, string[]> = {
-  stardew: [stardewStardrop, stardewPrismatic, stardewCandy],
+  stardew: [stardewTea, stardewPrismatic, stardewCandy],
   celeste: [celesteGolden, celesteCrystal, celesteFeather],
   hollow: [hollowKingsBrand, hollowHuntersMark, hollowRoyalScepter]
 };
 
-/** Chapter rows cycle the same precious trio the part badges use. */
+/** Chapter rows keep everyday marks and do not repeat the volume relics. */
 const chapterSprites: Record<GameWorldId, string[]> = {
-  stardew: [stardewStardrop, stardewPrismatic, stardewCandy],
-  celeste: [celesteGolden, celesteCrystal, celesteFeather],
-  hollow: [hollowKingsBrand, hollowHuntersMark, hollowRoyalScepter]
+  stardew: [stardewParsnip, stardewChest, stardewFish, stardewCan, stardewWood],
+  celeste: [celesteStrawberry, celesteMountain, celesteStrawberries, celesteForsaken],
+  hollow: [hollowMask, hollowSoul, hollowGeo, hollowNail]
 };
 
 function NavSprite({

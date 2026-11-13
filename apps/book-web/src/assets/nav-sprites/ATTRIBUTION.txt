@@ -2,7 +2,8 @@ Sidebar navigation sprites for agent-book fan UI (non-commercial).
 
 Stardew Valley (ConcernedApe)
   Source: stardewvalleywiki.com Special:FilePath item sprites
-  Part badges (precious): stardrop, prismatic-shard, magic-rock-candy
+  Part badges (precious, first-level only): stardrop-tea, prismatic-shard, magic-rock-candy
+  stardrop.png is the right-side loot mark only and is not reused on the left
   Chapter marks: pearl, dinosaur-egg, ancient-doll, chest, fish
   collectible.png  ← Stardrop — right-side chapter loot mark
 
