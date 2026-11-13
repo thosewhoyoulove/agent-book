@@ -5,7 +5,6 @@ import { AgentLoopSimulator } from "./components/AgentLoopSimulator";
 import { CodeBlock } from "./components/CodeBlock";
 import { CollectibleSprite, HeroWorldScene, WorldEmblemIcon } from "./components/GameWorldArt";
 import { AdventureSidebar } from "./components/AdventureSidebar";
-import { BgmToggleIcon } from "./components/NavIcons";
 import { chapterContent, chapterEditorialMeta } from "./content/chapters";
 import { minimalLoopCode, productionLoopCode } from "./content/chapter5";
 import {
@@ -386,7 +385,6 @@ function HomePage({
 export function App() {
   const [worldId, setWorldId] = useState<GameWorldId>(getInitialWorldId);
   const [dark, setDark] = useState(getInitialTheme);
-  const [bgmEnabled, setBgmEnabled] = useState(() => worldBgm.isEnabled());
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [mobileOutlineOpen, setMobileOutlineOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -453,13 +451,6 @@ export function App() {
     },
     [showLootToast]
   );
-
-  useEffect(() => {
-    const unsubscribeBgm = worldBgm.subscribe(setBgmEnabled);
-    return () => {
-      unsubscribeBgm();
-    };
-  }, []);
 
   useEffect(() => {
     worldBgm.play(worldId);
@@ -797,13 +788,19 @@ export function App() {
               aria-label="打开冒险地图目录"
               aria-expanded={mobileNavOpen}
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path
-                  d="M2.5 4.25H13.5M2.5 8H13.5M2.5 11.75H10.5"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
+              <svg width="16" height="16" viewBox="0 0 16 16" shapeRendering="crispEdges" aria-hidden="true">
+                {mobileNavOpen ? (
+                  <>
+                    <rect x="3" y="7" width="10" height="2" transform="rotate(45 8 8)" fill="currentColor" />
+                    <rect x="3" y="7" width="10" height="2" transform="rotate(-45 8 8)" fill="currentColor" />
+                  </>
+                ) : (
+                  <>
+                    <rect x="2" y="3" width="12" height="2" fill="currentColor" />
+                    <rect x="2" y="7" width="12" height="2" fill="currentColor" />
+                    <rect x="2" y="11" width="12" height="2" fill="currentColor" />
+                  </>
+                )}
               </svg>
             </button>
           )}
@@ -865,29 +862,6 @@ export function App() {
               );
             })}
           </div>
-
-          <button
-            className={`bgm-toggle${worldBgm.hasAnyTrack() ? "" : " is-empty"}`}
-            type="button"
-            onClick={() => {
-              worldBgm.unlock();
-              worldBgm.toggle();
-              if (!worldBgm.isEnabled()) return;
-              worldBgm.play(worldId, true);
-            }}
-            aria-pressed={bgmEnabled}
-            aria-label={bgmEnabled ? "关闭背景音乐" : "开启背景音乐"}
-            title={
-              worldBgm.hasAnyTrack()
-                ? bgmEnabled
-                  ? "BGM 开 · 点击关闭"
-                  : "BGM 关 · 点击开启"
-                : "请先放入 apps/book-web/src/assets/bgm/ 主题曲素材"
-            }
-          >
-            <BgmToggleIcon enabled={bgmEnabled} />
-            <span>{bgmEnabled ? "BGM 开" : "BGM 关"}</span>
-          </button>
 
           <button
             className="search-trigger"

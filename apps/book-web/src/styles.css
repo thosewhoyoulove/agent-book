@@ -593,7 +593,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 }
 .world-pill span { white-space: nowrap; }
 
-.search-trigger, .topbar-link, .theme-toggle, .sfx-toggle, .bgm-toggle {
+.search-trigger, .topbar-link, .theme-toggle, .sfx-toggle {
   height: 34px; display: inline-flex; align-items: center; gap: 6px;
   padding: 0 10px;
   border: 2px solid var(--line-strong);
@@ -606,14 +606,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   font-weight: 700;
   clip-path: var(--pixel-cut-sm);
 }
-.sfx-toggle[aria-pressed="true"], .bgm-toggle[aria-pressed="true"] {
+.sfx-toggle[aria-pressed="true"] {
   border-color: var(--accent); color: var(--accent); background: var(--accent-soft);
 }
-.sfx-toggle[aria-pressed="false"], .bgm-toggle[aria-pressed="false"] { color: var(--muted); }
-.bgm-toggle.is-empty { opacity: 0.72; }
+.sfx-toggle[aria-pressed="false"] { color: var(--muted); }
 .search-trigger { width: 150px; color: var(--muted); }
 .search-trigger__placeholder { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
-.search-trigger:hover, .topbar-link:hover, .theme-toggle:hover, .sfx-toggle:hover, .bgm-toggle:hover {
+.search-trigger:hover, .topbar-link:hover, .theme-toggle:hover, .sfx-toggle:hover {
   border-color: var(--accent); background: var(--accent-soft);
   transform: translate(-1px, -1px);
   box-shadow: 3px 3px 0 color-mix(in srgb, var(--accent) 40%, transparent);
@@ -1347,7 +1346,7 @@ kbd {
 
 @media (prefers-reduced-motion: reduce) {
   .sidebar--celeste .player-card__worlds button:hover,
-  .search-trigger:hover, .topbar-link:hover, .theme-toggle:hover, .sfx-toggle:hover, .bgm-toggle:hover,
+  .search-trigger:hover, .topbar-link:hover, .theme-toggle:hover, .sfx-toggle:hover,
   .cartridge-card:hover, .cartridge-card.is-active, .home-chapter-card:hover {
     transform: none;
   }
@@ -1912,13 +1911,21 @@ details p { margin: 8px 0 0; color: var(--muted); font-size: 13px; line-height: 
   .mobile-outline-bar__menu i { color: var(--faint); font: 500 11px var(--mono); font-style: normal; }
 }
 @media (max-width: 720px) {
-  .topbar { padding: 0 12px; }
+  .topbar { padding: 0 8px; gap: 8px; }
+  .topbar__leading, .topbar__actions { gap: 6px; flex-shrink: 0; }
   .mobile-nav-toggle {
-    width: 34px; height: 34px; display: grid; place-items: center; padding: 0;
-    border: 1px solid var(--line); border-radius: 0; color: var(--ink); background: var(--canvas-elevated);
+    width: 36px; height: 36px; display: grid; place-items: center; padding: 0;
+    border: 2px solid var(--ink); border-radius: 0; color: var(--ink); background: var(--canvas);
+    box-shadow: 2px 2px 0 var(--line-strong);
+    clip-path: var(--pixel-cut-sm);
   }
-  .brand-mark__sub, .topbar-link span, .search-trigger kbd, .theme-toggle span, .sfx-toggle span, .bgm-toggle span { display: none; }
-  .search-trigger { width: auto; min-width: 42px; }
+  .brand-mark { gap: 8px; }
+  .brand-mark__glyph { width: 32px; height: 32px; box-shadow: 2px 2px 0 var(--line-strong); }
+  .brand-mark__name { font-size: 9px; }
+  .brand-mark__sub, .topbar-link span, .search-trigger__placeholder, .search-trigger kbd, .theme-toggle span, .sfx-toggle span { display: none; }
+  .search-trigger, .topbar-link, .theme-toggle {
+    width: 36px; min-width: 36px; height: 36px; padding: 0; justify-content: center;
+  }
   .world-pill-bar { display: none; }
   .reading-layout { display: block; }
   .sidebar {
