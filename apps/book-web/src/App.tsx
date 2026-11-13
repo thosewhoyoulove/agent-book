@@ -734,6 +734,9 @@ export function App() {
     setMobileOutlineOpen(false);
     setSearchOpen(false);
     setIsHome(false);
+    setExpandedChapters((chapterIds) =>
+      chapterIds.includes(chapterId) ? chapterIds : [...chapterIds, chapterId]
+    );
 
     if (chapterId !== activeChapterId) {
       window.history.pushState(null, "", `#${chapterId}`);
@@ -1129,7 +1132,7 @@ export function App() {
             expandedChapters={expandedChapters}
             activeChapterId={activeChapterId}
             activeSection={activeSection}
-            activeChapterOutline={activeChapterOutline}
+            getChapterOutline={getChapterOutline}
             progressMap={progressMap}
             availableChapterCount={availableChapterOrder.length}
             currentChapterProgress={currentChapterProgress}
