@@ -1550,16 +1550,26 @@ details p { margin: 8px 0 0; color: var(--muted); font-size: 13px; line-height: 
   width: 26px; height: 26px; display: grid; place-items: center; padding: 0;
   border: 1px solid var(--line-strong); border-radius: 2px; background: var(--canvas); color: var(--faint);
 }
-.collectible-svg.is-locked, .collectible-sprite.is-locked { opacity: 0.35; filter: grayscale(1); color: var(--faint); }
-.collectible-svg.is-unlocked, .collectible-sprite.is-unlocked { opacity: 1; filter: none; }
-.collectible-sprite {
-  display: inline-block; object-fit: contain; flex-shrink: 0;
-  vertical-align: middle; user-select: none; pointer-events: none;
+.collectible-svg {
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: middle;
+  color: var(--accent);
+  user-select: none;
+  pointer-events: none;
 }
-.collectible-sprite.is-pixel {
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
+.collectible-svg.is-locked {
+  opacity: 0.38;
+  color: var(--faint);
 }
+.collectible-svg.is-unlocked {
+  opacity: 1;
+  color: var(--accent);
+  filter: drop-shadow(0 0 3px color-mix(in srgb, currentColor 35%, transparent));
+}
+.collectible-svg--stardew.is-unlocked { color: #c45adf; }
+.collectible-svg--celeste.is-unlocked { color: #e45567; }
+.collectible-svg--hollow.is-unlocked { color: var(--accent); }
 
 .home-hero__map { position: relative; z-index: 1; min-height: 390px; display: grid; place-items: center; }
 .hero-diorama { position: relative; width: min(100%, 560px); }
