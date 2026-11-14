@@ -1,4 +1,4 @@
-import { defaultSceneByWorld, getAmbientAsset, getMusicAsset, sceneProfiles, uiSoundAssets } from "./audioConfig";
+import { defaultSceneByWorld, getAmbientAsset, getMusicAsset, getUiSoundAsset, sceneProfiles } from "./audioConfig";
 import { audioThemes } from "./themes";
 import type {
   AudioSceneId,
@@ -8,16 +8,16 @@ import type {
 } from "./audioTypes";
 import type { GameWorldId } from "../content/gameWorlds";
 
-const storageKey = "agent-book-audio-settings";
+const storageKey = "agent-book-audio-settings-v2";
 
 export const defaultAudioSettings: AudioSettings = {
-  masterVolume: 0.72,
+  masterVolume: 1,
   uiEnabled: true,
-  uiVolume: 0.58,
+  uiVolume: 0.95,
   ambientEnabled: false,
-  ambientVolume: 0.42,
+  ambientVolume: 0.7,
   musicEnabled: false,
-  musicVolume: 0.32,
+  musicVolume: 0.6,
   muted: false,
   scene: "spring-day"
 };
@@ -134,7 +134,7 @@ class AudioManager {
   }
 
   setScene(scene: AudioSceneId) {
-    if (!(scene in sceneProfiles) || this.settings.scene === scene) return;
+    if (!(scene in sceneProfiles) || !audioThemes[this.worldId].ambientScenes.includes(scene) || this.settings.scene === scene) return;
     this.updateSettings({ scene });
   }
 
@@ -173,7 +173,7 @@ class AudioManager {
     const last = this.lastPlayed.get(soundId) ?? 0;
     if (now - last < (soundId === "click" ? 55 : 110)) return;
     this.lastPlayed.set(soundId, now);
-    const url = uiSoundAssets[soundId];
+    const url = getUiSoundAsset(this.worldId, soundId);
     if (!url) return;
     const context = this.ensureContext();
     if (!context || !this.uiGain) return;
@@ -185,7 +185,7 @@ class AudioManager {
       const source = context.createBufferSource();
       source.buffer = buffer;
       const gain = context.createGain();
-      gain.gain.value = soundId === "click" ? 0.68 : 0.88;
+      gain.gain.value = soundId === "click" ? 1.2 : soundId === "page" ? 1.35 : 1.15;
       source.connect(gain).connect(this.uiGain!);
       sources.add(source);
       this.activeSources.set(soundId, sources);
@@ -207,7 +207,7 @@ class AudioManager {
 
   private startAmbient() {
     const context = this.ensureContext();
-    if (!context || !this.ambientGain || this.worldId !== "stardew") return;
+    if (!context || !this.ambientGain) return;
     const theme = audioThemes[this.worldId];
     if (!theme.ambientScenes.includes(this.settings.scene)) return;
     void context.resume();
@@ -215,14 +215,16 @@ class AudioManager {
     this.stopAmbient(420);
 
     const sceneId = this.settings.scene;
-    const asset = getAmbientAsset(this.worldId, sceneId);
+    const worldId = this.worldId;
+    const asset = getAmbientAsset(worldId, sceneId);
     if (asset) {
       void this.loadBuffer(asset).then((buffer) => {
         if (!buffer || context.state === "closed") return;
         if (
           !this.settings.ambientEnabled ||
           this.settings.muted ||
-          this.worldId !== "stardew" ||
+          this.worldId !== worldId ||
+          !audioThemes[this.worldId].ambientScenes.includes(sceneId) ||
           this.settings.scene !== sceneId
         ) {
           return;

@@ -448,14 +448,16 @@ export function App() {
 
   const selectWorld = useCallback(
     (id: GameWorldId, toast = true) => {
+      const changed = id !== worldId;
       setWorldId(id);
       audioManager.setWorld(id);
+      if (changed) audioManager.playUi("switch");
       if (toast) {
         const item = gameWorlds[id];
         showLootToast(`已切换游戏卡带：${item.shortName}（${item.title}）`);
       }
     },
-    [showLootToast]
+    [showLootToast, worldId]
   );
 
   useEffect(() => {
@@ -773,7 +775,7 @@ export function App() {
     const target = event.target instanceof Element ? event.target.closest<HTMLElement>("button, a, [data-audio]") : null;
     if (!target || target.getAttribute("aria-disabled") === "true" || target.hasAttribute("disabled")) return;
     const explicit = target.dataset.audio;
-    if (explicit === "none") return;
+    if (explicit === "none" || explicit === "switch") return;
     if (explicit) {
       audioManager.playUi(explicit as Parameters<typeof audioManager.playUi>[0]);
       return;

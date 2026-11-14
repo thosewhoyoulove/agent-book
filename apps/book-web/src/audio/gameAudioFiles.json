@@ -1,0 +1,93 @@
+{
+  "stardew": {
+    "ui": {
+      "click": "smallSelect.wav",
+      "open": "bigSelect.wav",
+      "close": "bigDeSelect.wav",
+      "page": "newRecipe.wav",
+      "success": "achievement.wav",
+      "collect": "harvest.wav",
+      "switch": "smallSelect.wav",
+      "theme": "bigSelect.wav"
+    },
+    "music": {
+      "spring-day": "spring1_pink_petals.wav",
+      "summer-day": "summer1_orange.wav",
+      "autumn-day": "fall1_majestic.wav",
+      "winter-day": "winter1_new_snow.wav",
+      "spring-night": "title_night.wav",
+      "rain": "MainTheme.wav",
+      "ocean": "IslandMusic.wav",
+      "fireplace": "Saloon1.wav"
+    },
+    "ambient": {
+      "spring-day": "spring_day_ambient.wav",
+      "spring-night": "spring_night_ambient.wav",
+      "rain": "rain.wav",
+      "ocean": "ocean.wav",
+      "fireplace": "cracklingFire.wav"
+    }
+  },
+  "celeste": {
+    "ui": {
+      "click": "ui_main_button_select.ogg",
+      "open": "ui_main_whoosh_large_in.ogg",
+      "close": "ui_main_whoosh_large_out.ogg",
+      "page": "ui_world_journal_page_main_forward_01.ogg",
+      "success": "ui_postgame_crystalheart.ogg",
+      "collect": "game_gen_strawberry_red_get_1000.ogg",
+      "switch": "ui_world_icon_select.ogg",
+      "theme": "ui_world_icon_select.ogg"
+    },
+    "music": {
+      "spring-day": "mus_lvl1_main_piano_loop.ogg",
+      "summer-day": "mus_lvl2_main_loop.ogg",
+      "autumn-day": "mus_lvl3_explore_ambient_loop.ogg",
+      "winter-day": "mus_lvl8_ice1_loop.ogg",
+      "spring-night": "mus_lvl2_main_loop.ogg",
+      "rain": "mus_lvl5_darknorm_loop.ogg",
+      "ocean": "mus_lvl3_explore_ambient_loop.ogg",
+      "fireplace": "mus_lvl1_main_piano_loop.ogg"
+    },
+    "ambient": {
+      "spring-day": "env_amb_00_main.ogg",
+      "summer-day": "env_amb_04_windstrength_1.ogg",
+      "winter-day": "env_amb_09_cold.ogg",
+      "rain": "env_amb_04_windstrength_1.ogg",
+      "ocean": "env_amb_06_lake.ogg",
+      "fireplace": "env_loc_campfire_loop.ogg"
+    }
+  },
+  "hollow": {
+    "ui": {
+      "click": "ui-option-click.wav",
+      "open": "ui-button-confirm.wav",
+      "close": "ui-option-click.wav",
+      "page": "ui-change-selection.wav",
+      "success": "ui-button-confirm.wav",
+      "collect": "ui-option-click.wav",
+      "switch": "ui-button-confirm.wav",
+      "theme": "ui-button-confirm.wav"
+    },
+    "music": {
+      "spring-day": "greenpath.wav",
+      "summer-day": "greenpath.wav",
+      "autumn-day": "greenpath.wav",
+      "winter-day": "crystal.wav",
+      "spring-night": "title.wav",
+      "rain": "waterways.wav",
+      "ocean": "waterways.wav",
+      "fireplace": "title.wav"
+    },
+    "ambient": {
+      "spring-day": "dirtmouth-wind.wav",
+      "summer-day": "dirtmouth-wind.wav",
+      "autumn-day": "cave-wind.wav",
+      "winter-day": "cave-wind.wav",
+      "spring-night": "dirtmouth-wind.wav",
+      "rain": "rain.wav",
+      "ocean": "waterways.wav",
+      "fireplace": "fire-loop.wav"
+    }
+  }
+}

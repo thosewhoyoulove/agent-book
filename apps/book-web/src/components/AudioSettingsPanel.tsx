@@ -1,4 +1,4 @@
-import { localStardewAmbientEnabled, localStardewMusicEnabled, sceneProfiles } from "../audio/audioConfig";
+import { localGameAudioEnabled, onlineGameAudioEnabled, sceneProfiles } from "../audio/audioConfig";
 import { audioThemes } from "../audio/themes";
 import type { AudioSceneId, AudioSettings } from "../audio/audioTypes";
 import type { GameWorldId } from "../content/gameWorlds";
@@ -74,7 +74,7 @@ export function AudioSettingsPanel({
           <div className="audio-control-card">
             <div className="audio-control-card__head">
               <label><input type="checkbox" disabled={!ambientAvailable} checked={settings.ambientEnabled} onChange={(event) => onChange({ ambientEnabled: event.target.checked })} /> 环境音</label>
-              <span>{ambientAvailable ? (worldId === "stardew" && localStardewAmbientEnabled ? "本机原版环境音" : "Web Audio 场景层") : "当前浏览器不支持"}</span>
+              <span>{ambientAvailable ? (onlineGameAudioEnabled ? "线上压缩原版环境音" : localGameAudioEnabled ? "本机原版环境音" : "Web Audio 场景层") : "当前浏览器不支持"}</span>
             </div>
             <label className="audio-range audio-range--compact">
               <span><b>环境音音量</b><output>{Math.round(settings.ambientVolume * 100)}%</output></span>
@@ -85,7 +85,7 @@ export function AudioSettingsPanel({
           <div className="audio-control-card">
             <div className="audio-control-card__head">
               <label><input type="checkbox" disabled={!musicAvailable} checked={settings.musicEnabled} onChange={(event) => onChange({ musicEnabled: event.target.checked })} /> 背景音乐</label>
-              <span>{musicAvailable ? (worldId === "stardew" && localStardewMusicEnabled ? "本机原版音乐" : "当前卡带 CC0 音乐") : "当前主题暂无曲目"}</span>
+              <span>{musicAvailable ? (onlineGameAudioEnabled ? "线上压缩原版音乐" : localGameAudioEnabled ? "本机原版音乐" : "当前卡带 CC0 音乐") : "当前主题暂无曲目"}</span>
             </div>
             <label className="audio-range audio-range--compact">
               <span><b>音乐音量</b><output>{Math.round(settings.musicVolume * 100)}%</output></span>
@@ -97,7 +97,7 @@ export function AudioSettingsPanel({
             <span><b>当前环境场景</b><small>切换会平滑停止旧场景</small></span>
             <select value={settings.scene} onChange={(event) => onChange({ scene: event.target.value as AudioSceneId })} aria-label="当前环境音场景">
               {availableScenes.map((id) => (
-                <option key={id} value={id}>{sceneProfiles[id].label}</option>
+                <option key={id} value={id}>{audioThemes[worldId].sceneLabels[id] ?? sceneProfiles[id].label}</option>
               ))}
             </select>
           </label>
@@ -109,7 +109,7 @@ export function AudioSettingsPanel({
         </div>
 
         <div className="audio-panel__footer">
-          <span>本机原版环境音会优先使用已核对的场景文件；没有对应文件时使用低频生成层。</span>
+          <span>{onlineGameAudioEnabled ? "线上使用经过压缩和响度处理的音频资源；本机开发可切换到已核对的原版文件。" : "本机原版环境音会优先使用已核对的场景文件；没有对应文件时使用低频生成层。"}</span>
           <button className="button button--ghost" type="button" onClick={onReset}>恢复默认</button>
         </div>
       </section>

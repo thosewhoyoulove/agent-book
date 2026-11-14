@@ -1,5 +1,6 @@
 import type { GameWorldId } from "../content/gameWorlds";
 import type { AudioSceneId, SceneProfile, UiSoundId } from "./audioTypes";
+import gameAudioFiles from "./gameAudioFiles.json";
 
 const sfxAssets = import.meta.glob("../assets/sfx/*.{wav,mp3,ogg}", {
   eager: true,
@@ -33,50 +34,43 @@ export const musicAssets: Record<GameWorldId, string | null> = {
   hollow: assetByName(bgmAssets, "hollow.ogg")
 };
 
-export const localStardewMusicEnabled = import.meta.env.VITE_AGENT_BOOK_LOCAL_MUSIC === "true";
+export const localGameAudioEnabled = import.meta.env.DEV && import.meta.env.VITE_AGENT_BOOK_LOCAL_MUSIC === "true";
+export const onlineGameAudioEnabled = import.meta.env.PROD;
+export const localStardewMusicEnabled = localGameAudioEnabled;
+export const localStardewAmbientEnabled = localGameAudioEnabled;
 
-export const localStardewAmbientEnabled = localStardewMusicEnabled;
+const audioFiles: Record<GameWorldId, {
+  ui: Record<UiSoundId, string>;
+  music: Partial<Record<AudioSceneId, string>>;
+  ambient: Partial<Record<AudioSceneId, string>>;
+}> = gameAudioFiles;
 
-function localAudioUrl(directory: "stardew-music" | "stardew-audio", fileName: string) {
-  if (import.meta.env.DEV) return `/__agent-book-local-audio/${fileName}`;
-  return `${import.meta.env.BASE_URL}private-audio/${directory}/${fileName}`;
+function gameAudioUrl(world: GameWorldId, category: "ui" | "ambient" | "music", fileName: string): string | null {
+  if (onlineGameAudioEnabled) {
+    const onlineName = fileName.replace(/\.(wav|mp3|ogg)$/i, ".ogg");
+    return `${import.meta.env.BASE_URL}online-audio/${world}/${category}/${encodeURIComponent(onlineName)}`;
+  }
+  if (localGameAudioEnabled) {
+    const directory = category === "music"
+      ? (world === "stardew" ? "stardew-music" : `${world}/music`)
+      : (world === "stardew" ? "stardew-audio" : `${world}/audio`);
+    return `/__agent-book-local-audio/${directory}/${encodeURIComponent(fileName)}`;
+  }
+  return null;
 }
 
-const localStardewMusicByScene: Partial<Record<AudioSceneId, string>> =
-  localStardewMusicEnabled
-    ? {
-        "spring-day": localAudioUrl("stardew-music", "spring1_pink_petals.wav"),
-        "summer-day": localAudioUrl("stardew-music", "summer1_orange.wav"),
-        "autumn-day": localAudioUrl("stardew-music", "fall1_majestic.wav"),
-        "winter-day": localAudioUrl("stardew-music", "winter1_new_snow.wav"),
-        "spring-night": localAudioUrl("stardew-music", "title_night.wav"),
-        rain: localAudioUrl("stardew-music", "MainTheme.wav"),
-        ocean: localAudioUrl("stardew-music", "IslandMusic.wav"),
-        fireplace: localAudioUrl("stardew-music", "Saloon1.wav")
-      }
-    : {};
-
-const localStardewAmbientByScene: Partial<Record<AudioSceneId, string>> =
-  localStardewAmbientEnabled
-    ? {
-        "spring-day": localAudioUrl("stardew-audio", "spring_day_ambient.wav"),
-        "spring-night": localAudioUrl("stardew-audio", "spring_night_ambient.wav"),
-        rain: localAudioUrl("stardew-audio", "rain.wav"),
-        ocean: localAudioUrl("stardew-audio", "ocean.wav"),
-        fireplace: localAudioUrl("stardew-audio", "cracklingFire.wav")
-      }
-    : {};
+export function getUiSoundAsset(worldId: GameWorldId, soundId: UiSoundId): string | null {
+  return gameAudioUrl(worldId, "ui", audioFiles[worldId].ui[soundId]) ?? uiSoundAssets[soundId];
+}
 
 export function getAmbientAsset(worldId: GameWorldId, scene: AudioSceneId): string | null {
-  if (worldId !== "stardew") return null;
-  return localStardewAmbientByScene[scene] ?? null;
+  const fileName = audioFiles[worldId].ambient[scene];
+  return fileName ? gameAudioUrl(worldId, "ambient", fileName) : null;
 }
 
 export function getMusicAsset(worldId: GameWorldId, scene: AudioSceneId): string | null {
-  if (worldId === "stardew") {
-    return localStardewMusicByScene[scene] ?? musicAssets[worldId];
-  }
-  return musicAssets[worldId];
+  const fileName = audioFiles[worldId].music[scene];
+  return (fileName ? gameAudioUrl(worldId, "music", fileName) : null) ?? musicAssets[worldId];
 }
 
 export const sceneProfiles: Record<AudioSceneId, SceneProfile> = {
@@ -95,22 +89,3 @@ export const defaultSceneByWorld: Record<GameWorldId, AudioSceneId> = {
   celeste: "winter-day",
   hollow: "spring-night"
 };
-
-/**
- * 星露谷原版音效只在本地授权资源导入后使用。
- * 这些名称来自 Modding:Audio 的常见 Cue 名称，不能作为已提取资源的证明。
- */
-export const localStardewCueMap = {
-  smallSelect: "ui-small-select",
-  bigSelect: "ui-big-select",
-  bigDeSelect: "ui-big-deselect",
-  bookRead: "book_read",
-  questComplete: "questcomplete",
-  achievement: "achievement",
-  harvest: "harvest",
-  springDayAmbient: "spring_day_ambient",
-  springNightAmbient: "spring_night_ambient",
-  rain: "rain",
-  ocean: "ocean",
-  cracklingFire: "cracklingFire"
-} as const;

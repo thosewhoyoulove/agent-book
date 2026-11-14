@@ -1,5 +1,5 @@
 import { celesteAudioTheme } from "./celeste";
-import { hollowKnightAudioTheme } from "./celeste";
+import { hollowKnightAudioTheme } from "./hollowKnight";
 import { stardewAudioTheme } from "./stardew";
 
 export const audioThemes = {
